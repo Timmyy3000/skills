@@ -1,0 +1,24 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Delivery Workflow",
+      "description": "Skills for planning, reviewing, shipping, and opening pull requests.",
+      "skills": [
+        "plan-it",
+        "ship-it",
+        "code-review",
+        "create-pr"
+      ]
+    },
+    {
+      "title": "Frontend Quality",
+      "description": "Skills for React, Next.js, web design, accessibility, performance, and UX quality.",
+      "skills": [
+        "vercel-react-best-practices",
+        "web-design-guidelines"
+      ]
+    }
+  ]
+}
