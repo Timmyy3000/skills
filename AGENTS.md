@@ -24,6 +24,6 @@ npx skills add . --list
 Use local install tests before telling the team to update:
 
 ```powershell
-npx skills add . --skill plan-it --agent codex
+npx skills add . --skill plan-it --agent <agent-name>
 npx skills add . --skill plan-it --agent claude-code
 ```

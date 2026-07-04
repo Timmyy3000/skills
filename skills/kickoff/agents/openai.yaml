@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kickoff"
+  short_description: "Start a guided engineering workflow"
+  default_prompt: "Use /kickoff to start a guided engineering workflow for this change."

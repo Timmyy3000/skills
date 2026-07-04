@@ -8,6 +8,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 
 | Skill | Purpose |
 | --- | --- |
+| `kickoff` | Start a guided IC engineering workflow from intake through accepted plan and execution handoff. |
 | `plan-it` | Create Lavish-backed interactive implementation plans and archive accepted plans as read-only HTML. |
 | `ship-it` | Execute a planned change from kickoff through PR readiness. |
 | `code-review` | Review local branch changes before opening or updating a PR. |
@@ -23,16 +24,23 @@ Install all skills with the Skills CLI:
 npx skills add Timmyy3000/skills
 ```
 
+Install the full kickoff workflow:
+
+```powershell
+npx skills add Timmyy3000/skills --skill kickoff --skill plan-it --skill ship-it --skill code-review --skill create-pr
+```
+
 Install selected skills:
 
 ```powershell
+npx skills add Timmyy3000/skills --skill kickoff
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
 ```
 
 Install to specific agents:
 
 ```powershell
-npx skills add Timmyy3000/skills --agent codex
+npx skills add Timmyy3000/skills --agent <agent-name>
 npx skills add Timmyy3000/skills --agent claude-code
 npx skills add Timmyy3000/skills --agent antigravity
 ```
@@ -47,13 +55,14 @@ For a private clone or local testing:
 
 ```powershell
 npx skills add .
-npx skills add . --skill plan-it --agent codex
+npx skills add . --skill kickoff --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
+npx skills add . --skill plan-it --agent <agent-name>
 ```
 
 The helper script wraps the same CLI:
 
 ```powershell
-.\scripts\install-local.ps1 -Skills plan-it,code-review -Agents codex,claude-code -Global
+.\scripts\install-local.ps1 -Skills kickoff,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
 ```
 
 ## Validate

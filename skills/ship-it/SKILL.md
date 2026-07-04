@@ -1,11 +1,11 @@
 ---
 name: ship-it
-description: End-to-end coding workflow for starting and shipping a defined product or engineering problem from plan to pull request readiness. Use when the user says "Ship it", asks Codex to start work on a problem, execute an agreed plan, create or review a missing plan, create a feature branch, implement with Red/Green TDD and frequent commits, open a PR using the create-pr skill, and monitor Enkii/code review feedback until the PR is ready to merge.
+description: End-to-end coding workflow for starting and shipping a defined product or engineering problem from plan to pull request readiness. Use when the user says "Ship it", asks the agent to start work on a problem, execute an agreed plan, create or review a missing plan, create a feature branch, implement with Red/Green TDD and frequent commits, open a PR using the create-pr skill, and monitor Enkii/code review feedback until the PR is ready to merge.
 ---
 
 # Ship it
 
-Use this skill when the user wants Codex to take a problem from kickoff through PR readiness.
+Use this skill when the user wants the agent to take a problem from kickoff through PR readiness.
 
 ## Workflow
 
@@ -42,7 +42,7 @@ Use this skill when the user wants Codex to take a problem from kickoff through 
      - run the smallest useful validation;
      - commit intentional changes only.
    - Commit frequently with clear messages.
-   - Include the correct `Co-authored-by:` trailer when Codex materially contributed.
+   - Include the correct `Co-authored-by:` trailer when the agent materially contributed and the repo requires it.
 
 5. Validate before PR.
    - Run repo-required checks.

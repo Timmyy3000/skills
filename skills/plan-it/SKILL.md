@@ -12,8 +12,7 @@ Create a reviewable implementation plan as a Lavish HTML artifact, using the tar
 Before planning, verify that the `lavish` skill is available.
 
 1. Check the active skill list and common local skill paths:
-   - `$CODEX_HOME/skills/lavish`
-   - `~/.codex/skills/lavish`
+   - The active agent's configured skills directory
    - `~/.agents/skills/lavish`
    - `<workspace>/.agents/skills/lavish`
 2. If `lavish` exists, read its `SKILL.md` and follow its workflow for creating, opening, polling, and ending the Lavish review session.

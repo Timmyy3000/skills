@@ -6,6 +6,7 @@
       "title": "Delivery Workflow",
       "description": "Skills for planning, reviewing, shipping, and opening pull requests.",
       "skills": [
+        "kickoff",
         "plan-it",
         "ship-it",
         "code-review",
