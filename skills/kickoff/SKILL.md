@@ -7,7 +7,7 @@ description: Start an IC engineering workflow from initial intent to accepted pl
 
 Guide an engineer from an initial work idea to a clear brief, accepted plan, and execution handoff.
 
-Keep this skill thin. Own intake, context capture, routing, and approval gates. Do not duplicate `plan-it`, `ship-it`, `code-review`, or `create-pr`.
+Keep this skill thin. Own intake, context capture, routing, and approval gates. Do not duplicate `plan-it`, `adversarial-review`, `ship-it`, `code-review`, or `create-pr`.
 
 ## Rules
 
@@ -25,6 +25,7 @@ Keep this skill thin. Own intake, context capture, routing, and approval gates. 
 Before starting intake, verify that the required workflow skills are available:
 
 - `plan-it`
+- `adversarial-review`
 - `ship-it`
 - `code-review`
 - `create-pr`
@@ -43,13 +44,13 @@ If a required skill is missing:
 3. Suggest installing the full workflow bundle:
 
 ```powershell
-npx skills add Timmyy3000/skills --skill kickoff --skill plan-it --skill ship-it --skill code-review --skill create-pr
+npx skills add Timmyy3000/skills --skill kickoff --skill adversarial-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
 ```
 
 For local testing from this repository, suggest:
 
 ```powershell
-npx skills add . --skill kickoff --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
+npx skills add . --skill kickoff --skill adversarial-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
 ```
 
 If the user only wants an investigation that will not plan, implement, review, or create a PR, `kickoff` may continue without all delivery dependencies after clearly stating the missing skills and limiting the workflow to read-only investigation.
@@ -239,7 +240,23 @@ For pure investigations, do not force `plan-it` unless the investigation is larg
 
 ## Adversarial Plan Review
 
-Before presenting the plan as ready, challenge it against the brief and source evidence.
+Before presenting the plan as ready, invoke `adversarial-review` in a fresh agent session when the environment supports fresh sessions.
+
+Pass only:
+
+- The `adversarial-review` skill.
+- The work brief path and contents.
+- The plan artifact or plan text.
+- Relevant source specs, tickets, logs, docs, screenshots, and code references.
+- A short instruction to review the plan for readiness and return structured findings.
+
+Do not pass expected findings, private conclusions, or the intended fix. The review must be independent.
+
+Read the adversarial review output and feed its `Plan Feedback For Revision` back into `plan-it` when findings are `Blocker` or `Major`. Update the work brief with accepted findings, decisions, and unresolved risks.
+
+If a fresh agent session is unavailable, run `adversarial-review` in the current session and clearly state that the review was not independent.
+
+The review should challenge:
 
 Check for:
 
@@ -253,7 +270,7 @@ Check for:
 - Hidden dependencies, migrations, permissions, data integrity, rollout, or rollback risks.
 - Validation commands that are absent, too broad, or too weak.
 
-If meaningful gaps exist, revise the plan or ask targeted questions. Update the brief with decisions and unresolved risks.
+If meaningful gaps exist, revise the plan or ask targeted questions. Do not ask the user to approve execution until blocker and major plan-review findings are resolved, explicitly accepted as risk, or converted into tracked follow-up work.
 
 ## Approval Gate
 
