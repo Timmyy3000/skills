@@ -13,6 +13,7 @@ Keep this skill thin. Own intake, context capture, routing, and approval gates. 
 
 - Treat `/kickoff` as the user-facing invocation.
 - Verify required workflow skills before routing work to them.
+- Set up or select an isolated task worktree before writing planning artifacts when the user wants parallel workflow support.
 - Create durable context before planning, implementation, or investigation.
 - Ask only for information that materially changes scope, risk, priority, or execution.
 - Prefer repo evidence over assumptions. Read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
@@ -55,6 +56,65 @@ npx skills add . --skill kickoff --skill adversarial-review --skill plan-it --sk
 
 If the user only wants an investigation that will not plan, implement, review, or create a PR, `kickoff` may continue without all delivery dependencies after clearly stating the missing skills and limiting the workflow to read-only investigation.
 
+## Worktree Setup
+
+Before creating the work brief, ask for worktree and branch preferences:
+
+- Worktree manager: `forest` or `git`. Recommend `forest` and default to it when the user does not choose.
+- Branch/worktree name: ask what the user wants to name the branch or worktree. Default to `auto`, where the agent creates a slug and branch from the work type, title, and repo conventions.
+- Base branch or ref, if different from the repo default.
+
+Use one isolated worktree per kickoff effort. Run `plan-it`, `adversarial-review`, and `ship-it` from that same worktree so multiple kickoff efforts can happen in parallel without colliding.
+
+### Forest Mode
+
+When using Forest, follow the Forest agent contract:
+
+1. Run `forest status --json` before creating or selecting a worktree. If `--json` is unavailable in the installed Forest version, use `forest status` and avoid scraping more than needed.
+2. Never reuse another agent's dirty worktree.
+3. Create the worktree with Forest:
+
+```powershell
+forest add -b <branch-name> --from <base-ref> --agent <agent-name> --json
+```
+
+If the user chose a simple worktree name instead of a branch name, use:
+
+```powershell
+forest add <worktree-name> --from <base-ref> --agent <agent-name> --json
+```
+
+Omit `--from` when using the repo default base. Use `--fetch` only when the base branch cannot be resolved locally or the user asks to refresh remotes.
+
+4. Read the returned worktree path and do all kickoff work inside that path.
+5. Mark activity from inside the worktree:
+
+```powershell
+forest mark --phase working --agent <agent-name> --note "kickoff planning"
+```
+
+6. Do not remove Forest worktrees manually. Cleanup must go through `forest close` only when the user asks or the work is proven integrated.
+7. If Forest reports inconsistent state, run `forest doctor --json` and report the findings rather than repairing state manually.
+
+When Forest is missing, tell the user and ask whether to install Forest, switch to ordinary git worktrees, or continue without a worktree for a read-only investigation.
+
+### Git Worktree Mode
+
+When the user chooses ordinary git, use Git directly and keep the same isolation principle:
+
+1. Inspect `git status --short --branch` and `git worktree list --porcelain`.
+2. Choose or confirm a branch name.
+3. Choose or confirm a worktree path by repo convention. If none exists, ask before creating a new convention.
+4. Create the worktree:
+
+```powershell
+git worktree add -b <branch-name> <worktree-path> <base-ref>
+```
+
+If the branch already exists, omit `-b` and add the branch directly.
+
+Do not use ordinary git cleanup commands for Forest-managed worktrees.
+
 ## Folder Convention
 
 Before writing any kickoff files, discover where the target repo already stores agent or planning artifacts.
@@ -92,6 +152,8 @@ Ask for the smallest useful set of answers:
 - Known constraints, owners, dependencies, and affected repos.
 - Existing specs, tickets, docs, screenshots, logs, metrics, or links.
 - Execution mode: `auto`, `subagents`, or `solo`.
+- Worktree manager: `forest` recommended, or ordinary `git`.
+- Branch/worktree name: user-provided name or `auto`.
 
 Execution mode meanings:
 
@@ -118,6 +180,9 @@ Use this structure:
 
 - Type:
 - Execution mode:
+- Worktree manager:
+- Branch:
+- Worktree path:
 - Created:
 - Target date:
 - Current phase:
@@ -290,6 +355,7 @@ When the user approves execution, invoke `ship-it` and provide:
 
 - Accepted plan path or Lavish artifact path.
 - Work brief path.
+- Worktree manager, branch, and worktree path.
 - Execution mode.
 - Target branch or base branch if known.
 - Validation expectations.

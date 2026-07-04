@@ -21,9 +21,11 @@ Use this skill when the user wants the agent to take a problem from kickoff thro
 
 2. Prepare the repo.
    - Identify the affected repo or repos.
+   - If the task was handed off from `kickoff` with a worktree path, continue inside that worktree.
+   - If the handoff says Forest is managing the worktree, use Forest status/mark commands and do not remove or manually rewrite Forest worktree state.
    - Check current branch and working tree.
    - Preserve unrelated user changes.
-   - Create a feature branch following repo conventions.
+   - Create a feature branch following repo conventions only when a suitable branch was not already created by the kickoff worktree setup.
    - For Docsyde repos, prefer `ft/<feature-name>`, `fix/<bug-name>`, or `hot/<urgent-fix>` unless the repo says otherwise.
 
 3. Implement with Red/Green TDD.
@@ -43,6 +45,7 @@ Use this skill when the user wants the agent to take a problem from kickoff thro
      - commit intentional changes only.
    - Commit frequently with clear messages.
    - Include the correct `Co-authored-by:` trailer when the agent materially contributed and the repo requires it.
+   - When working in a Forest worktree, update activity with `forest mark --phase working --note "<current phase>"` at meaningful phase transitions when Forest is available.
 
 5. Validate before PR.
    - Run repo-required checks.
@@ -75,6 +78,7 @@ Use this skill when the user wants the agent to take a problem from kickoff thro
 ## Rules
 
 - Do not implement large feature work directly on `dev` or `main`.
+- Do not abandon a kickoff-provided worktree to work in the main checkout.
 - Do not skip planning when the task is substantial.
 - Do not create substantial plans as plain text only; create previewable HTML plan artifacts using the repo's plan-template structure.
 - Do not batch all work into one large commit.
