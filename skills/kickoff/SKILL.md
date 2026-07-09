@@ -1,13 +1,13 @@
 ---
 name: kickoff
-description: Start an IC engineering workflow from initial intent to accepted plan and execution handoff. Use when the user invokes /kickoff or $kickoff, wants to start feature work, bug fixing, improvements, refactors, hotfixes, investigations, explorations, or asks for a guided workflow that creates a work brief, gathers requirements, routes to $plan-it, reviews the plan adversarially, and hands off to $ship-it after approval.
+description: Start an IC engineering workflow from initial intent through plan approval, implementation, pull request creation, and review monitoring. Use when the user invokes /kickoff or $kickoff, wants to start feature work, bug fixing, improvements, refactors, hotfixes, investigations, explorations, or asks for a guided workflow that creates a work brief, gathers requirements, routes to $plan-it, reviews the plan adversarially, then continues through $ship-it after plan approval.
 ---
 
 # Kickoff
 
-Guide an engineer from an initial work idea to a clear brief, accepted plan, and execution handoff.
+Guide an engineer from an initial work idea to a clear brief, accepted plan, implementation, pull request, and monitored review loop.
 
-Keep this skill thin. Own intake, context capture, routing, and approval gates. Do not duplicate `plan-it`, `adversarial-review`, `ship-it`, `code-review`, or `create-pr`.
+Keep this skill thin. Own intake, context capture, routing, and plan approval. Do not duplicate `plan-it`, `adversarial-review`, `ship-it`, `code-review`, or `create-pr`.
 
 ## Rules
 
@@ -17,9 +17,11 @@ Keep this skill thin. Own intake, context capture, routing, and approval gates. 
 - Create durable context before planning, implementation, or investigation.
 - Ask only for information that materially changes scope, risk, priority, or execution.
 - Prefer repo evidence over assumptions. Read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
-- Do not start implementation until the user accepts a plan or explicitly asks to fast-track a small change.
+- Treat plan approval as the normal user approval point. After the user approves the plan, continue through implementation, PR creation, and review monitoring without stopping for routine confirmations.
+- Do not start implementation until the user approves the plan or explicitly asks to fast-track a small change.
 - Keep the work brief updated as decisions are made.
 - If the work is tiny and low risk, offer a fast path instead of forcing the full workflow.
+- Stop after plan approval only for real blockers: missing credentials, unavailable required systems, destructive actions, broad scope changes, unresolved product decisions, failed external authentication, or explicit user pause.
 
 ## Dependency Check
 
@@ -154,6 +156,7 @@ Ask for the smallest useful set of answers:
 - Execution mode: `auto`, `subagents`, or `solo`.
 - Worktree manager: `forest` recommended, or ordinary `git`.
 - Branch/worktree name: user-provided name or `auto`.
+Ask the user for initial input once, then proceed with sensible defaults unless a blocker appears. Do not repeatedly pause for preferences that can be inferred safely.
 
 Execution mode meanings:
 
@@ -337,21 +340,23 @@ Check for:
 
 If meaningful gaps exist, revise the plan or ask targeted questions. Do not ask the user to approve execution until blocker and major plan-review findings are resolved, explicitly accepted as risk, or converted into tracked follow-up work.
 
-## Approval Gate
+## Plan Approval And Continuation
 
-After planning or investigation review, ask the user to choose:
+After planning or investigation review, ask the user to approve or revise the plan. This is the normal approval point before implementation.
 
-- Approve and execute.
-- Revise the plan.
-- Continue investigating.
-- Defer or stop.
-- Fast-track a small scoped change.
+If the user approves, immediately invoke `ship-it` and keep the workflow moving through implementation, local review, PR creation, and PR monitoring.
 
-Do not invoke `ship-it` until the user approves execution or explicitly asks to proceed.
+If the user requests revisions, update the brief and send the feedback through `plan-it` before asking for plan approval again.
+
+If the user asks to continue investigating, keep the workflow in investigation mode and update the brief with findings.
+
+If the user asks to defer, stop and record the current state in the brief.
+
+Do not add extra approval gates after plan approval. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, or explicit user instruction.
 
 ## Execution Handoff
 
-When the user approves execution, invoke `ship-it` and provide:
+When the user approves the plan, invoke `ship-it` and provide:
 
 - Accepted plan path or Lavish artifact path.
 - Work brief path.
@@ -361,7 +366,9 @@ When the user approves execution, invoke `ship-it` and provide:
 - Validation expectations.
 - Known risks and open questions.
 
-Let `ship-it` run the implementation loop, including branch prep, Red/Green TDD, commits, validation, `code-review`, `create-pr`, and PR monitoring.
+Let `ship-it` run the implementation loop to completion, including branch prep, Red/Green TDD, commits, validation, `code-review`, `create-pr`, pull request creation, a 5-minute review monitor, code review bot checks, CI checks, and review feedback fixes.
+
+Kickoff is not complete when the PR is opened. It is complete only when `ship-it` reports that the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
 
 ## Output Back To The User
 

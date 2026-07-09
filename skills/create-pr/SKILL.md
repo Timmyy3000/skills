@@ -15,6 +15,7 @@ Prepare a branch for review and create the PR only after local validation and bl
 - Follow project guidance before inferred defaults. Read `AGENTS.md`, `.cursor/rules/*`, `CONTRIBUTING.md`, package config, Makefiles, CI workflow files, and repo-specific docs relevant to changed paths.
 - If validation commands fail because of unrelated pre-existing repository state, stop and report the blocker instead of hiding it.
 - Automatically create the PR after all required checks pass and P0/P1 local review findings are fixed or explicitly deferred by the user.
+- When this skill is part of an end-to-end workflow, return enough PR context for the caller to start or update a 5-minute review monitor immediately.
 
 ## Workflow
 
@@ -30,6 +31,7 @@ Prepare a branch for review and create the PR only after local validation and bl
 10. Commit local fixes with the repo's commit conventions.
 11. Push the branch.
 12. Create the PR with the standardized body.
+13. Report PR monitoring context to the caller.
 
 ## Validation Discovery
 
@@ -104,6 +106,23 @@ Use this PR body:
 ```
 
 If the repository has a required PR template, preserve its required sections and merge these fields into it.
+
+## PR Monitoring Context
+
+After creating the PR, report:
+
+- PR URL.
+- PR number when available.
+- Head branch.
+- Base branch.
+- Remote.
+- Current check/CI status when discoverable.
+- Whether a code review bot appears to be active or pending.
+- Any immediate review, mergeability, or authentication blockers.
+
+If `create-pr` is invoked by `ship-it` or another end-to-end workflow, explicitly hand back: `Start or update a 5-minute PR monitor now.`
+
+If `create-pr` is invoked standalone and automation tools are available, create or update the 5-minute PR monitor directly. If automation tools are unavailable, tell the user that the PR was created but no monitor could be scheduled.
 
 ## Stop Conditions
 

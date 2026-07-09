@@ -1,11 +1,13 @@
 ---
 name: ship-it
-description: End-to-end coding workflow for starting and shipping a defined product or engineering problem from plan to pull request readiness. Use when the user says "Ship it", asks the agent to start work on a problem, execute an agreed plan, create or review a missing plan, create a feature branch, implement with Red/Green TDD and frequent commits, open a PR using the create-pr skill, and monitor Enkii/code review feedback until the PR is ready to merge.
+description: End-to-end coding workflow for starting and shipping a defined product or engineering problem from plan to pull request readiness. Use when the user says "Ship it", asks the agent to start work on a problem, execute an agreed plan, create or review a missing plan, create a feature branch, implement with Red/Green TDD and frequent commits, open a PR using the create-pr skill, and monitor code review bot feedback until the PR is ready to merge.
 ---
 
 # Ship it
 
 Use this skill when the user wants the agent to take a problem from kickoff through PR readiness.
+
+After an approved plan is handed off, continue autonomously through implementation, local review, PR creation, and PR monitoring. Do not stop merely because a plan was approved, a PR was created, or a review is pending.
 
 ## Workflow
 
@@ -60,8 +62,9 @@ Use this skill when the user wants the agent to take a problem from kickoff thro
    - Include tests run, risks, and rollout notes.
 
 7. Monitor review.
-   - Set up an automation/heartbeat to monitor the PR.
-   - Watch Enkii/code review, security review, CI checks, mergeability, and human comments.
+   - Set up an automation/heartbeat to monitor the PR every 5 minutes.
+   - Do not use 30-minute or longer review-monitoring intervals unless the user explicitly asks for a slower cadence.
+   - Watch code review bot feedback, security review, CI checks, mergeability, and human comments.
    - If actionable feedback appears:
      - inspect the review comment;
      - implement a scoped fix;
@@ -84,6 +87,7 @@ Use this skill when the user wants the agent to take a problem from kickoff thro
 - Do not batch all work into one large commit.
 - Do not stage unrelated files.
 - Do not merge the PR without explicit user approval.
+- Do not finish just because the PR exists. The workflow remains active until the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
 - Prefer Red/Green TDD for every behavior change where a meaningful local test can be written.
 - Prefer evidence from repo files, tests, CI, and review comments over assumptions.
 
@@ -93,8 +97,8 @@ When ready to open the PR, invoke the local `create-pr` skill and follow its ins
 
 ## Automation handoff
 
-- After PR creation, create or update a monitor automation for the PR.
-- The monitor should inspect PR checks, Enkii review, security review, review comments, mergeability, and merge state.
+- After PR creation, create or update a monitor automation for the PR with a 5-minute cadence.
+- The monitor should inspect PR checks, code review bot feedback, security review, review comments, mergeability, and merge state.
 - If actionable feedback appears, fix it on the PR branch, validate, commit, push, and continue monitoring.
 - Stop monitoring when the PR is clear, ready, merged, or explicitly canceled.
 - Never merge by itself.
