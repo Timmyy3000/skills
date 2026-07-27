@@ -7,6 +7,19 @@ description: Create interactive, Lavish-backed product or technical implementati
 
 Create a reviewable implementation plan as a Lavish HTML artifact, using the target repo's own design language and the local planning template when available.
 
+## Simplicity Gate
+
+Prefer the simplest elegant solution that fully satisfies the problem. Treat complexity as a cost, not a sign of thoroughness.
+
+- Start with the minimum viable change: reuse existing patterns and components before introducing new abstractions, services, layers, dependencies, or phases.
+- For every proposed piece of work, ask: does it directly satisfy a requirement, address a demonstrated risk, or preserve an important constraint? If not, leave it out.
+- Do not design for speculative scale, future flexibility, hypothetical reuse, or edge cases without evidence that they matter now.
+- Prefer a small number of coherent steps over exhaustive decomposition. Keep the plan proportional to the change.
+- When alternatives are considered, recommend the simplest option that meets the acceptance criteria and briefly state why more elaborate options were rejected.
+- Make complexity visible: call out any non-obvious mechanism, migration, abstraction, or cross-system coordination and justify its intrinsic value.
+
+Before finalizing the plan, perform a simplicity pass: remove optional work, collapse redundant phases, and verify that each remaining item earns its place.
+
 ## Dependency Check
 
 Before planning, verify that the `lavish` skill is available.
