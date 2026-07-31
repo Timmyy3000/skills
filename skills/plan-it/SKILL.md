@@ -30,7 +30,7 @@ Before planning, verify that the `lavish` skill is available.
    - `<workspace>/.agents/skills/lavish`
 2. If `lavish` exists, read its `SKILL.md` and follow its workflow for creating, opening, polling, and ending the Lavish review session.
 3. If `lavish` is missing, install or restore it before continuing when a known source is available. Prefer the user's local skill installer or configured skill repository. If no source is discoverable, tell the user Lavish is required and ask for the install source.
-4. Use `npx -y lavish-axi ...` for Lavish commands. Do not assume `lavish-axi` is globally installed.
+4. Use the configured forked Lavish package for every Lavish command. The default package is `github:Timmyy3000/lavish-axi#ft/lavish-viewer-reliability`; allow `LAVISH_AXI_PACKAGE` to override it when a different fork or branch is required. Resolve that value once before running commands and substitute it for `<lavish-package>` below; `<lavish-package>` is a placeholder, not a literal argument. Invoke it as `npx -y --package=<lavish-package> lavish-axi ...`; never silently fall back to the published `lavish-axi` package.
 
 ## Planning Workflow
 
@@ -42,7 +42,7 @@ Before planning, verify that the `lavish` skill is available.
    - Frontend styling: Tailwind config, CSS variables, theme files, component library, shared layout components, brand assets, screenshots
    - Backend conventions: contributing guide, test commands, migrations guide, API docs, architecture docs
 3. If the target repo has a frontend design system, make the Lavish HTML artifact visually match it. Use the product's tokens, spacing, typography, component shapes, and color behavior where practical.
-4. If no local design system is discoverable, use Lavish's fallback design guidance. Run `npx -y lavish-axi design` if needed.
+4. If no local design system is discoverable, use Lavish's fallback design guidance. Run `npx -y --package=<lavish-package> lavish-axi design` if needed, using the fork package resolved in the dependency check.
 5. Open every Lavish playbook that matches the artifact content before writing HTML:
    - `plan` for implementation plans
    - `diagram` for architecture, flow, state, or sequence diagrams
@@ -51,9 +51,9 @@ Before planning, verify that the `lavish` skill is available.
    - `input` when the artifact asks the user to choose scope, priority, or tradeoffs
    - `code` when showing files, APIs, schemas, or diffs
 6. Create the artifact at `.lavish/<descriptive-plan-name>.html` unless the user requested another path.
-7. Run `npx -y lavish-axi <html-file>` to open the review session, then `npx -y lavish-axi poll <html-file>` to receive annotations and layout warnings.
+7. Run `npx -y --package=<lavish-package> lavish-axi <html-file>` to open the review session, then `npx -y --package=<lavish-package> lavish-axi poll <html-file>` to receive annotations and layout warnings.
 8. Fix fresh error-severity layout warnings before asking the user to review. If warnings are persistent or low-severity, proceed with a short note.
-9. Apply user feedback, poll again with an agent reply, and end the session with `npx -y lavish-axi end <html-file>` when review is complete.
+9. Apply user feedback, poll again with an agent reply, and end the session with `npx -y --package=<lavish-package> lavish-axi end <html-file>` when review is complete.
 10. After the user accepts the plan, export or save a read-only HTML archival copy in the appropriate repo plan location. Do not archive the editable Lavish working file as the accepted plan.
 
 ## Plan Content Standard
@@ -97,7 +97,7 @@ For cross-repo work, include:
 
 When the user accepts the plan, store a read-only HTML version in the repository so it can be reviewed, shared, and committed without needing the Lavish editor session.
 
-1. Create the archival file from the final accepted artifact. Prefer `npx -y lavish-axi export <html-file> --out <archive-path>` when available so local assets are inlined into a portable HTML file. If export is unavailable, write a standalone read-only HTML copy that removes editor/session affordances and keeps the final reviewed content.
+1. Create the archival file from the final accepted artifact. Prefer `npx -y --package=<lavish-package> lavish-axi export <html-file> --out <archive-path>` when available so local assets are inlined into a portable HTML file. If export is unavailable, write a standalone read-only HTML copy that removes editor/session affordances and keeps the final reviewed content.
 2. Choose archive locations by inspecting repo instructions and existing folders:
    - First follow any explicit instruction in `AGENTS.md`, repo docs, contributing guides, or planning guides.
    - Then prefer an existing repo-local plan folder, such as `docs/agent-plans/`, `docs/plans/`, `plans/`, `.agent/plans/`, or another clearly named local equivalent.

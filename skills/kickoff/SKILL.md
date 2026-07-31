@@ -20,6 +20,7 @@ Keep this skill thin. Own intake, context capture, routing, and plan approval. D
 - Treat plan approval as the normal user approval point. After the user approves the plan, continue through implementation, PR creation, and review monitoring without stopping for routine confirmations.
 - Do not start implementation until the user approves the plan or explicitly asks to fast-track a small change.
 - Keep the work brief updated as decisions are made.
+- Delegate Lavish command selection to `plan-it`. Preserve its configured fork package and do not invoke the published `lavish-axi` package directly from kickoff.
 - If the work is tiny and low risk, offer a fast path instead of forcing the full workflow.
 - Stop after plan approval only for real blockers: missing credentials, unavailable required systems, destructive actions, broad scope changes, unresolved product decisions, failed external authentication, or explicit user pause.
 
