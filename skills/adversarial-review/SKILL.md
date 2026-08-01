@@ -139,4 +139,4 @@ If there are no meaningful findings, say `Ready` and explain the residual risk o
 
 ## Handoff Back To Caller
 
-The calling workflow should read this output, update the work brief with accepted findings, and feed `Plan Feedback For Revision` back into `plan-it` before asking the user to approve execution.
+The calling workflow should read this output, update the work brief with accepted findings, and feed `Plan Feedback For Revision` back into the planner. After revising the plan and recording finding dispositions, pass the revised plan, this complete review, and those dispositions to `simplicity-review` before approval or execution.

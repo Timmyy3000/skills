@@ -1,4 +1,4 @@
 interface:
   display_name: "Kickoff"
-  short_description: "Start a guided engineering workflow"
-  default_prompt: "Use /kickoff to start a guided engineering workflow for this change."
+  short_description: "Start a full or fast engineering workflow"
+  default_prompt: "Use /kickoff to choose and run the right planning and delivery path for this change."
