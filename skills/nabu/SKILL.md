@@ -5,11 +5,18 @@ description: Work with Nabu vault notes and agent integrations over its HTTP API
 
 # Nabu agent contract
 
-Use Nabu's HTTP API for normal note operations. Fetch the live contract at
-`https://nabu.timi.click/agents.md` before starting if the deployment or API
-version is uncertain; it returns raw Markdown. Do not use browser automation
-for normal note operations. Use `curl` or another ordinary HTTP client, and
-use the browser only for human navigation or explicit UI testing.
+Use Nabu's HTTP API for normal note operations. Set `NABU_URL` to the base URL
+of the user's own deployment, then fetch `${NABU_URL}/agents.md` before starting
+if the deployment or API version is uncertain; it returns raw Markdown. Do not
+use browser automation for normal note operations. Use `curl` or another
+ordinary HTTP client, and use the browser only for human navigation or explicit
+UI testing.
+
+For example:
+
+```bash
+export NABU_URL="https://nabu.example.com"
+```
 
 ## Authentication
 
@@ -26,7 +33,7 @@ Example login:
 curl -i -c /tmp/nabu-cookies.txt \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data 'password=YOUR_PASSWORD&redirect=%2Fagents.md' \
-  https://nabu.timi.click/api/auth/login
+  "${NABU_URL}/api/auth/login"
 ```
 
 Never place a real password or token in a repository, shell history, or a
@@ -148,33 +155,33 @@ Run the local MCP server with `npm run mcp` and use stdio transport.
 
 ```bash
 curl -s -b /tmp/nabu-cookies.txt \
-  -X POST https://nabu.timi.click/api/vault/notes \
+  -X POST "${NABU_URL}/api/vault/notes" \
   -H 'Content-Type: application/json' \
-  --data '{"path":"projects/docsyde/sales/icp-findings","rawMarkdown":"# ICP Findings"}'
+  --data '{"path":"projects/example/notes/icp-findings","rawMarkdown":"# ICP Findings"}'
 ```
 
 ### Update a note
 
 ```bash
 curl -s -b /tmp/nabu-cookies.txt \
-  -X PUT https://nabu.timi.click/api/vault/notes/by-path \
+  -X PUT "${NABU_URL}/api/vault/notes/by-path" \
   -H 'Content-Type: application/json' \
-  --data '{"path":"projects/docsyde/sales/icp-findings.md","rawMarkdown":"# ICP Findings\n\nUpdated"}'
+  --data '{"path":"projects/example/notes/icp-findings.md","rawMarkdown":"# ICP Findings\n\nUpdated"}'
 ```
 
 ### Move, delete, and verify by path
 
 ```bash
 curl -s -b /tmp/nabu-cookies.txt \
-  -X PATCH https://nabu.timi.click/api/vault/notes/by-path \
+  -X PATCH "${NABU_URL}/api/vault/notes/by-path" \
   -H 'Content-Type: application/json' \
-  --data '{"path":"docsyde/sales/icp-findings.md","toPath":"projects/docsyde/sales/icp-findings.md"}'
+  --data '{"path":"projects/example/notes/icp-findings.md","toPath":"projects/example/archive/icp-findings.md"}'
 
 curl -s -b /tmp/nabu-cookies.txt \
-  -X DELETE 'https://nabu.timi.click/api/vault/notes/by-path?path=projects/docsyde/sales/icp-findings.md'
+  -X DELETE "${NABU_URL}/api/vault/notes/by-path?path=projects/example/archive/icp-findings.md"
 
 curl -s -b /tmp/nabu-cookies.txt \
-  'https://nabu.timi.click/api/vault/notes/by-path?path=projects/docsyde/sales/icp-findings.md'
+  "${NABU_URL}/api/vault/notes/by-path?path=projects/example/archive/icp-findings.md"
 ```
 
-Source: [Nabu `/agents.md`](https://nabu.timi.click/agents.md)
+Source: the Nabu deployment's `/agents.md` contract.
