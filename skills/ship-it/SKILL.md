@@ -1,104 +1,142 @@
 ---
 name: ship-it
-description: End-to-end coding workflow for starting and shipping a defined product or engineering problem from plan to pull request readiness. Use when the user says "Ship it", asks the agent to start work on a problem, execute an agreed plan, create or review a missing plan, create a feature branch, implement with Red/Green TDD and frequent commits, open a PR using the create-pr skill, and monitor code review bot feedback until the PR is ready to merge.
+description: Execute a defined product or engineering problem from an accepted full or fast-path plan through implementation, pull request readiness, and review monitoring. Use when the user says "Ship it," asks to execute an agreed plan, or arrives from $kickoff with implementation delegation set to never, auto, or always. Support harness-agnostic worker configuration and delegated implementation without changing independent plan-review behavior.
 ---
 
-# Ship it
+# Ship It
 
-Use this skill when the user wants the agent to take a problem from kickoff through PR readiness.
+Take a reviewed plan from execution handoff through implementation, local review, pull request creation, and review monitoring. Keep the current agent as orchestrator and use implementation workers only when the resolved delegation preference permits them.
 
-After an approved plan is handed off, continue autonomously through implementation, local review, PR creation, and PR monitoring. Do not stop merely because a plan was approved, a PR was created, or a review is pending.
+## Required Handoff
+
+Read and preserve these inputs when `kickoff` provides them:
+
+- Accepted Lavish plan or reviewed fast-path Markdown plan.
+- Work brief and task-workspace path.
+- Adversarial and simplicity review decisions.
+- Worktree manager, branch, and worktree path.
+- Planning mode.
+- Implementation delegation: `never`, `auto`, or `always`.
+- Delegation source: task choice, repository default, or fallback default.
+- Repository `kickoff.yaml` path when present.
+- Validation expectations, risks, and open questions.
+
+If invoked directly, find the existing brief and plan. If no executable plan exists, create a proportionate plan before implementation: route substantial, ambiguous, or risky work through the full planning and review workflow; allow a concise Markdown plan for small, clear, low-risk work. Do not replace a reviewed fast-path plan with HTML merely because this skill was invoked.
 
 ## Workflow
 
-1. Confirm the problem and plan source.
-   - If the user references an agreed plan, find and read it.
-   - If no plan exists, create one before implementation.
-   - Create new plans as styled HTML artifacts, not plain markdown-only plans.
-   - Use the existing repo plan templates for structure and required information, then express that structure as HTML.
-   - Include visualizations, charts, diagrams, state maps, or lightweight interactions when they materially help explain architecture, data flow, rollout, tradeoffs, or implementation phases.
-   - Keep visuals purposeful; do not add animation or interaction when a short section or table is clearer.
-   - Review the plan for scope, acceptance criteria, affected repos, validation, rollout, and risks.
-   - Do not start implementation until the plan is concrete enough to execute.
+### 1. Confirm The Execution Contract
 
-2. Prepare the repo.
-   - Identify the affected repo or repos.
-   - If the task was handed off from `kickoff` with a worktree path, continue inside that worktree.
-   - If the handoff says Forest is managing the worktree, use Forest status/mark commands and do not remove or manually rewrite Forest worktree state.
-   - Check current branch and working tree.
-   - Preserve unrelated user changes.
-   - Create a feature branch following repo conventions only when a suitable branch was not already created by the kickoff worktree setup.
-   - For Docsyde repos, prefer `ft/<feature-name>`, `fix/<bug-name>`, or `hot/<urgent-fix>` unless the repo says otherwise.
+- Read the plan, brief, accepted review findings, repository instructions, and relevant source evidence.
+- Confirm that requirements, acceptance criteria, scope, validation, and unresolved risks are executable.
+- Do not reopen settled planning decisions unless repository evidence reveals a material conflict.
 
-3. Implement with Red/Green TDD.
-   - Start each meaningful behavior change with a failing test when practical.
-   - Red: write or update the smallest test that proves the missing behavior or regression.
-   - Green: implement the smallest scoped change that makes the test pass.
-   - Refactor: clean up only after the test is passing, keeping the diff focused.
-   - If a test-first approach is impractical, state why and use the smallest equivalent validation before changing code.
-   - Prefer regression tests for bugs and acceptance-path tests for features.
+### 2. Prepare The Repository
 
-4. Implement in phases.
-   - Maintain a short todo list.
-   - Map each phase back to the plan.
-   - After each meaningful phase:
-     - verify changed files are still in scope;
-     - run the smallest useful validation;
-     - commit intentional changes only.
-   - Commit frequently with clear messages.
-   - Include the correct `Co-authored-by:` trailer when the agent materially contributed and the repo requires it.
-   - When working in a Forest worktree, update activity with `forest mark --phase working --note "<current phase>"` at meaningful phase transitions when Forest is available.
+- Continue inside the kickoff-provided worktree when one exists.
+- When Forest manages the worktree, use Forest status and mark commands; do not manually rewrite or remove Forest state.
+- Inspect the branch and working tree and preserve unrelated user changes.
+- Create a feature branch by repository convention only when kickoff did not already create one.
+- Keep all implementation, worker coordination, integration, and validation in the same task worktree.
 
-5. Validate before PR.
-   - Run repo-required checks.
-   - For backend changes, run required formatting and targeted tests/coverage per repo guidance.
-   - For frontend changes, run typecheck and relevant tests/build checks per repo guidance.
-   - Note any validation that could not be run and why.
+### 3. Resolve Implementation Delegation
 
-6. Open the PR.
-   - Use the `create-pr` skill.
-   - Target the repo’s normal integration branch, usually `dev`.
-   - Write a PR summary that links implementation back to the plan.
-   - Include tests run, risks, and rollout notes.
+Treat implementation delegation as separate from adversarial and simplicity review. It controls only workers used to execute the accepted plan.
 
-7. Monitor review.
-   - Set up an automation/heartbeat to monitor the PR every 5 minutes.
-   - Do not use 30-minute or longer review-monitoring intervals unless the user explicitly asks for a slower cadence.
-   - Watch code review bot feedback, security review, CI checks, mergeability, and human comments.
-   - If actionable feedback appears:
-     - inspect the review comment;
-     - implement a scoped fix;
-     - run relevant validation;
-     - commit and push;
-     - continue monitoring.
-   - Do not merge the PR unless the user explicitly asks.
+Resolve the mode in this order when kickoff did not already provide it:
 
-8. Finish only when ready.
-   - Report PR URL, current status, validation, and any remaining blockers.
-   - If review is clear and checks pass, report that the PR is ready to merge.
-   - If blocked, state the exact blocker and what is needed.
+1. Explicit task-specific user choice.
+2. Saved `implementation_delegation_default` in the discovered repo-level `kickoff.yaml`.
+3. `never`.
+
+When a direct `ship-it` invocation contains an explicit lasting instruction, persist it in `kickoff.yaml` using kickoff's folder and preservation rules before resolving the task.
+
+Apply the modes as follows:
+
+- `never`: spawn no implementation workers. Execute in the current orchestrator.
+- `auto`: lean toward workers when at least one bounded task can run independently without creating file or dependency conflicts. Record the decision and rationale.
+- `always`: delegate at least one bounded implementation task. Do not silently fall back to orchestrator-only execution when workers are unavailable.
+
+Accept legacy `solo` as `never` and `subagents` as `always`, but write only current values.
+
+Read [references/delegation.md](references/delegation.md) completely when `auto` selects workers or the mode is `always`. Worker profiles live under `ship_it.workers` in that same `kickoff.yaml`. Do not create worker configuration when the resolved path does not use workers.
+
+### 4. Decompose And Implement
+
+Keep the current agent responsible for orchestration, dependency ordering, shared decisions, integration, and final validation.
+
+For orchestrator-only execution:
+
+- Maintain a short phase list mapped to the accepted plan.
+- Implement each behavior with Red/Green TDD when practical.
+- Run the smallest useful validation after each meaningful phase.
+
+For delegated execution:
+
+- Follow the worker discovery, configuration, manifest, dispatch, and integration contract in `references/delegation.md`.
+- Create bounded work packets with explicit dependencies, file ownership, acceptance criteria, and validation.
+- Dispatch only dependency-ready tasks. Run independent tasks in parallel and coupled tasks in sequential waves.
+- Keep shared schemas, migrations, central configuration, architectural changes, and final integration with the orchestrator unless ownership is unambiguous.
+- Review every worker result and patch before accepting it.
+
+For both paths:
+
+- Start each meaningful behavior change with a failing test when practical.
+- Implement the smallest change that makes the test pass, then refactor only while green.
+- If test-first work is impractical, record why and use the smallest equivalent pre-change validation.
+- Commit focused intentional changes frequently by repository convention.
+- Never stage unrelated files.
+- Mark meaningful Forest phase transitions when Forest is available.
+
+### 5. Validate The Integrated Result
+
+- Run repository-required formatting, linting, type checks, tests, builds, and coverage checks.
+- Run task-specific acceptance and regression validation from the plan.
+- Re-run relevant checks after worker integration, even when workers reported them as passing.
+- Record any validation that could not run and the exact reason.
+- Invoke `code-review` before PR creation and resolve actionable blocking findings.
+
+### 6. Open The Pull Request
+
+- Invoke `create-pr` and follow its instructions completely.
+- Target the repository's normal integration branch.
+- Link implementation to the accepted plan and work brief.
+- Report tests, delegated work when relevant, risks, rollout, and unresolved limitations.
+
+### 7. Monitor Review
+
+- Create or update a 5-minute PR monitor.
+- Watch code review bot feedback, security review, CI, mergeability, and human comments.
+- For actionable feedback, apply a scoped fix, validate, commit, push, and continue monitoring.
+- Do not merge unless the user explicitly asks.
+
+### 8. Finish And Clean Up
+
+- Finish only when the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
+- Report the PR URL, current status, validation, delegated-task outcome, and remaining blockers.
+- Preserve durable plans, decisions, repository worker defaults, and required native worker profiles.
+- Clean up only temporary coordination artifacts clearly created by this workflow, following the ownership and safety rules in `references/delegation.md`.
+- Never remove a Forest worktree directly; use `forest close` only when the user asks or integration is proven and repository policy permits cleanup.
 
 ## Rules
 
-- Do not implement large feature work directly on `dev` or `main`.
-- Do not abandon a kickoff-provided worktree to work in the main checkout.
-- Do not skip planning when the task is substantial.
-- Do not create substantial plans as plain text only; create previewable HTML plan artifacts using the repo's plan-template structure.
+- Default implementation delegation to `never` when kickoff supplies no explicit or saved preference.
+- Never spawn implementation workers unless the user selected `auto` or `always` for the task or explicitly saved that repository default.
+- Never treat implementation delegation as permission to skip independent plan reviews.
+- Never persist an orchestrator model; the orchestrator is the current agent session.
+- Never hardcode Codex, Claude Code, OpenCode, or provider-specific model names into the portable workflow.
+- Never silently substitute a configured worker model or reasoning level.
+- Never let parallel workers own overlapping files or unresolved shared dependencies.
+- Do not implement large work directly on `dev` or `main`.
+- Do not abandon a kickoff-provided worktree.
 - Do not batch all work into one large commit.
-- Do not stage unrelated files.
-- Do not merge the PR without explicit user approval.
-- Do not finish just because the PR exists. The workflow remains active until the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
-- Prefer Red/Green TDD for every behavior change where a meaningful local test can be written.
-- Prefer evidence from repo files, tests, CI, and review comments over assumptions.
+- Do not merge without explicit user approval.
+- Do not finish merely because the PR exists.
 
-## Create-PR handoff
+## Create-PR Handoff
 
-When ready to open the PR, invoke the local `create-pr` skill and follow its instructions completely.
+When ready to open the PR, invoke the local `create-pr` skill and provide the accepted plan, work brief, validation evidence, known risks, and implementation-delegation summary.
 
-## Automation handoff
+## Automation Handoff
 
-- After PR creation, create or update a monitor automation for the PR with a 5-minute cadence.
-- The monitor should inspect PR checks, code review bot feedback, security review, review comments, mergeability, and merge state.
-- If actionable feedback appears, fix it on the PR branch, validate, commit, push, and continue monitoring.
-- Stop monitoring when the PR is clear, ready, merged, or explicitly canceled.
-- Never merge by itself.
+After PR creation, create or update a monitor with a 5-minute cadence. Stop monitoring only when the PR is clear, ready, merged, explicitly canceled, or blocked by a concrete external condition.

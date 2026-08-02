@@ -1,4 +1,4 @@
 interface:
   display_name: "Ship it"
-  short_description: "Plan, code, PR, and monitor review"
-  default_prompt: "Use $ship-it to take this problem from plan through PR readiness with Red/Green TDD and review monitoring."
+  short_description: "Execute plans with optional worker delegation"
+  default_prompt: "Use $ship-it to execute this reviewed plan through PR readiness with the configured implementation-delegation preference."

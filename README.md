@@ -12,7 +12,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
 | `simplicity-review` | Independently challenge unnecessary plan complexity while preserving required safeguards. |
 | `plan-it` | Create Lavish-backed interactive implementation plans and archive accepted plans as read-only HTML. |
-| `ship-it` | Execute a planned change from kickoff through PR readiness. |
+| `ship-it` | Execute a reviewed plan through PR readiness, with optional harness-agnostic worker delegation. |
 | `code-review` | Review local branch changes before opening or updating a PR. |
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
 | `vercel-react-best-practices` | Review React and Next.js code against Vercel performance guidance. |

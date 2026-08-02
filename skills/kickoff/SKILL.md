@@ -7,13 +7,13 @@ description: Start an IC engineering workflow from initial intent through planni
 
 Guide an engineer from an initial work idea to a clear brief, proportionate plan, implementation, pull request, and monitored review loop.
 
-Keep this skill thin. Own intake, context capture, planning-mode selection, routing, and any required plan approval. Do not duplicate `plan-it`, `adversarial-review`, `simplicity-review`, `ship-it`, `code-review`, or `create-pr`.
+Keep this skill thin. Own intake, context capture, planning-mode and implementation-delegation selection, routing, and any required plan approval. Do not duplicate `plan-it`, `adversarial-review`, `simplicity-review`, `ship-it`, `code-review`, or `create-pr`.
 
 ## Rules
 
 - Treat `/kickoff` as the user-facing invocation.
 - Verify required workflow skills before routing work to them.
-- Set up or select an isolated task worktree before writing planning artifacts when the user wants parallel workflow support.
+- Set up or select one isolated task worktree before writing planning artifacts.
 - Create durable context before planning, implementation, or investigation.
 - Ask only for information that materially changes scope, risk, priority, or execution.
 - Prefer repo evidence over assumptions. Read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
@@ -21,6 +21,8 @@ Keep this skill thin. Own intake, context capture, planning-mode selection, rout
 - Use the fast planning path when the user explicitly asks to skip human plan review or when the work is clearly small, bounded, and low risk. Skip only the Lavish artifact and human plan-approval gate; never skip the Markdown plan or independent reviews.
 - Do not start implementation until the full-path plan is approved or the fast-path plan has passed adversarial and simplicity review.
 - Keep the work brief updated as decisions are made.
+- Default implementation delegation to `never`. Use `auto` or `always` only when the user explicitly selects it for this task or has explicitly saved it as the repository default.
+- Treat implementation delegation as a `ship-it` execution preference only. It does not disable or alter independent adversarial or simplicity plan reviews.
 - Delegate Lavish command selection to `plan-it`. Preserve its configured fork package and do not invoke the published `lavish-axi` package directly from kickoff.
 - Escalate from fast to full planning if investigation reveals material ambiguity, broader scope, or risk. If the user explicitly requested no human plan review, keep a Markdown plan and ask only for the specific product, safety, or authorization decision that blocks execution.
 - Stop after plan approval only for real blockers: missing credentials, unavailable required systems, destructive actions, broad scope changes, unresolved product decisions, failed external authentication, or explicit user pause.
@@ -136,6 +138,16 @@ Choose the first matching convention:
 
 Do not create `.agent/` or `.agents/` merely because this skill mentions them. Follow the target repo's existing convention first.
 
+## Task Workspace
+
+After selecting the folder convention and before writing the work brief, establish the task-workspace path used for temporary coordination artifacts.
+
+- Prefer an existing per-task workspace convention when the repository has one.
+- Otherwise use the directory selected for the work brief without inventing another nested convention.
+- Keep the task workspace inside the kickoff-provided worktree.
+- Record the exact path in the work brief and hand it to `ship-it`.
+- Keep it available through planning, reviews, implementation, integration, and PR readiness. Let `ship-it` clean up only temporary artifacts it clearly owns; preserve durable plans and repository-required records.
+
 ## Intake
 
 Classify the work as one of:
@@ -156,19 +168,44 @@ Ask for the smallest useful set of answers:
 - Desired timeline or production target date, if any.
 - Known constraints, owners, dependencies, and affected repos.
 - Existing specs, tickets, docs, screenshots, logs, metrics, or links.
-- Execution mode: `auto`, `subagents`, or `solo`.
+- Implementation delegation: `never`, `auto`, or `always`.
 - Planning mode: `auto`, `full`, or `fast`.
 - Worktree manager: `forest` recommended, or ordinary `git`.
 - Branch/worktree name: user-provided name or `auto`.
-Ask the user for initial input once, then proceed with sensible defaults unless a blocker appears. Do not repeatedly pause for preferences that can be inferred safely.
+Ask the user for initial input once, then proceed with sensible defaults unless a blocker or first-use worker prerequisite appears. Do not repeatedly pause for preferences that can be inferred safely.
 
-Execution mode meanings:
+Implementation delegation meanings:
 
-- `auto`: decide whether subagents are useful based on scope, uncertainty, and risk.
-- `subagents`: use subagents where available for independent planning, review, or validation.
-- `solo`: keep the workflow single-agent unless blocked.
+- `never`: do not spawn implementation workers. This is the default when no explicit task choice or saved repository preference exists.
+- `auto`: allow `ship-it` to decide from the accepted plan. Lean toward delegation when the work contains bounded independent tasks, but avoid it when coordination would cost more than it saves.
+- `always`: require `ship-it` to delegate at least one bounded implementation task when the active harness supports workers.
 
-Default execution mode to `auto` when the user does not choose.
+Offer these choices during initial intake without making the user answer. If the user does not choose, resolve the current task from the saved repository preference and otherwise use `never`.
+
+Accept `subagents` as a legacy alias for `always` and `solo` as a legacy alias for `never`, but record only the current names.
+
+### Lasting Delegation Default
+
+Recognize explicit durable instructions such as:
+
+- "Always use subagents" -> save `always`.
+- "Never use subagents" -> save `never`.
+- "Choose subagents automatically" -> save `auto`.
+
+Store the repository default only after such an explicit lasting instruction. Use the repo's discovered agent-workspace convention and write `kickoff.yaml` under that root, for example `.agents/kickoff.yaml` or `.agent/kickoff.yaml`:
+
+```yaml
+version: 1
+implementation_delegation_default: "always"
+```
+
+This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions may remain separate. `ship-it` may later add a `ship_it.workers` mapping to the same file when delegated implementation is actually used; kickoff must preserve that section when changing the lasting default.
+
+Do not create `.agent/` or `.agents/` solely for this setting without following the Folder Convention rules. Do not add an empty `ship_it` section before a worker is configured. A task-specific choice overrides the saved default without changing it.
+
+Resolve the current task in this order: explicit task-specific choice, then saved repository default, then `never`.
+
+Record both the resolved value and its source in the work brief. This preference controls only how `kickoff` hands implementation to `ship-it`; plan reviews remain independent.
 
 Planning mode meanings:
 
@@ -194,11 +231,13 @@ Use this structure:
 ## Status
 
 - Type:
-- Execution mode:
+- Implementation delegation:
+- Delegation source:
 - Planning mode:
 - Worktree manager:
 - Branch:
 - Worktree path:
+- Task workspace:
 - Created:
 - Target date:
 - Current phase:
@@ -321,7 +360,8 @@ Invoke `plan-it` to create the Lavish-backed review artifact.
 Pass `plan-it`:
 
 - Work brief path.
-- Work type and execution mode.
+- Task-workspace path.
+- Work type and implementation-delegation preference.
 - Source docs, specs, links, and evidence.
 - Timeline constraints.
 - Non-negotiables.
@@ -425,7 +465,7 @@ If the user asks to continue investigating, keep the workflow in investigation m
 
 If the user asks to defer, stop and record the current state in the brief.
 
-Do not add extra approval gates after full-path approval or fast-path internal review. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, or explicit user instruction.
+Do not add extra approval gates after full-path approval or fast-path internal review. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, first-use worker configuration selected by the user, or explicit user instruction.
 
 ## Execution Handoff
 
@@ -433,8 +473,10 @@ When the full-path plan is approved or the fast-path plan passes both reviews, i
 
 - Accepted Lavish plan path or reviewed Markdown plan path.
 - Work brief path.
+- Adversarial and simplicity review decisions.
 - Worktree manager, branch, and worktree path.
-- Execution mode.
+- Implementation delegation and its source.
+- Repository `kickoff.yaml` path when one exists.
 - Planning mode.
 - Target branch or base branch if known.
 - Validation expectations.
@@ -451,6 +493,7 @@ At each phase transition, report:
 - Current phase.
 - Work brief path.
 - Planning mode and why it was selected.
+- Implementation delegation and whether it came from the task, repository, or fallback default.
 - Plan path when created, identifying it as Lavish or internal Markdown.
 - Open decisions that need the user.
 - Next skill being invoked and why.
