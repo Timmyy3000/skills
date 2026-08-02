@@ -199,7 +199,7 @@ version: 1
 implementation_delegation_default: "always"
 ```
 
-This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions may remain separate. `ship-it` may later add a `ship_it.workers` mapping to the same file when delegated implementation is actually used; kickoff must preserve that section when changing the lasting default.
+This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions remain separate. `ship-it` may later add harness-specific worker selectors under `ship_it.workers` when delegated implementation is actually used; kickoff must preserve that section when changing the lasting default.
 
 Do not create `.agent/` or `.agents/` solely for this setting without following the Folder Convention rules. Do not add an empty `ship_it` section before a worker is configured. A task-specific choice overrides the saved default without changing it.
 

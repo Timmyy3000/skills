@@ -59,7 +59,7 @@ Apply the modes as follows:
 
 Accept legacy `solo` as `never` and `subagents` as `always`, but write only current values.
 
-Read [references/delegation.md](references/delegation.md) completely when `auto` selects workers or the mode is `always`. Worker profiles live under `ship_it.workers` in that same `kickoff.yaml`. Do not create worker configuration when the resolved path does not use workers.
+Read [references/delegation.md](references/delegation.md) completely when `auto` selects workers or the mode is `always`. Harness-native worker selectors live under `ship_it.workers` in that same `kickoff.yaml`. Do not create worker configuration when the resolved path does not use workers.
 
 ### 4. Decompose And Implement
 
@@ -125,7 +125,7 @@ For both paths:
 - Never treat implementation delegation as permission to skip independent plan reviews.
 - Never persist an orchestrator model; the orchestrator is the current agent session.
 - Never hardcode Codex, Claude Code, OpenCode, or provider-specific model names into the portable workflow.
-- Never silently substitute a configured worker model or reasoning level.
+- Never silently substitute or override a configured worker selector.
 - Never let parallel workers own overlapping files or unresolved shared dependencies.
 - Do not implement large work directly on `dev` or `main`.
 - Do not abandon a kickoff-provided worktree.

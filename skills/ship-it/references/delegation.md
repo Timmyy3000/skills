@@ -7,7 +7,7 @@ Use this reference only when `ship-it` resolves implementation delegation to `al
 Use one repo-level `kickoff.yaml` for this workflow:
 
 - `implementation_delegation_default` optionally stores the user's lasting preference: `never`, `auto`, or `always`.
-- `ship_it.workers` stores harness-specific implementation-worker profiles only after delegated implementation needs one.
+- `ship_it.workers` stores one harness-native worker selector per harness only after delegated implementation needs one.
 
 Use the agent-workspace root already selected by repository instructions and kickoff, such as `.agents/` or `.agent/`. Do not create either convention blindly.
 
@@ -19,34 +19,37 @@ implementation_delegation_default: "auto"
 ship_it:
   workers:
     codex:
-      model: "<harness-native-model-id>"
-      reasoning_effort: "<optional-harness-native-level>"
-      profile: "<optional-native-worker-profile>"
+      agent: "<native-agent-name>"
     claude-code:
-      model: "<harness-native-model-id>"
-      profile: "<optional-native-worker-profile>"
+      agent: "<native-agent-name>"
     opencode:
       model: "<provider/model-id>"
+      reasoning_effort: "<optional-harness-native-level>"
 ```
 
-The lasting default is optional, and `ship_it` is optional until a worker is configured. Never create the file or an empty section merely because fallback mode is `never`. Store only worker settings under `ship_it`; the current session is the orchestrator and must not be persisted as a model choice.
+The lasting default is optional, and `ship_it` is optional until a worker is configured. Never create the file or an empty section merely because fallback mode is `never`. The current session is the orchestrator and must not be persisted.
 
-Treat model identifiers, reasoning settings, and profile names as opaque harness-native values. A profile for one harness must not overwrite another harness's entry.
+Each harness entry must use exactly one selector:
+
+- `agent`: exact harness-native named agent. Its native definition is the sole source of truth for model, reasoning, instructions, and other settings.
+- `model`: direct per-spawn model selection, with optional `reasoning_effort`, only when the harness has no named-agent requirement.
+
+Never combine `agent` and `model`, duplicate a named agent's model settings in `kickoff.yaml`, or overwrite another harness's entry.
 
 ## First-Use Worker Bootstrap
 
 When the current harness has no worker entry and delegation will be used:
 
 1. Identify the active harness and its available subagent mechanism.
-2. Determine whether it supports direct per-spawn model selection, requires a named worker definition, or lacks model-selectable workers.
-3. Ask the user which worker model to use. Ask for a reasoning level only when the harness supports one.
-4. Explain the native worker definition or configuration that must be created, including its path or scope.
-5. After the user confirms the worker choice, create the smallest required native worker definition and add the harness entry under `ship_it.workers` in `kickoff.yaml`, preserving its other keys and harness entries.
-6. Validate that the model and worker can actually be selected before dispatching implementation.
+2. Discover named agents available to the current harness before asking for model settings.
+3. If a suitable named agent exists, ask the user to select or confirm its exact name, validate it, and store only `agent`.
+4. If named agents are supported but none is suitable, ask for agent name, model, supported reasoning level, and personal or project scope. Explain and create the smallest valid native definition, validate it, then store only `agent`.
+5. If the harness dispatches directly by model, ask for model and supported reasoning level, validate them, then store `model` and optional `reasoning_effort`.
+6. Update only the active harness entry in `kickoff.yaml`, preserving all other keys and harnesses.
 
-Do not ask the user to choose an orchestrator model. Do not create worker profiles for harnesses they are not currently using.
+Do not ask for a named agent's model or reasoning settings when selecting an existing agent. Do not ask the user to choose an orchestrator model or configure inactive harnesses.
 
-Revalidate the saved active-harness worker before each delegated run. If it is unavailable or invalid, do not substitute another worker silently. Ask for a replacement, repair its harness-native definition when required, and update only the active harness entry.
+Revalidate the saved selector before each delegated run. If a named agent is unavailable or invalid, do not add model overrides or substitute another worker silently. Ask whether to repair it or choose a replacement and update only the active harness entry.
 
 If the harness cannot spawn workers:
 
@@ -128,7 +131,7 @@ Create the smallest useful number of tasks. Do not split work merely to maximize
 
 For each dependency-ready task:
 
-- Spawn the configured worker using the active harness's native mechanism.
+- Spawn `agent` by its exact native name without model or reasoning overrides; otherwise spawn with the configured `model` and optional `reasoning_effort`.
 - Prefer a fresh worker context where supported.
 - Pass the task ID, manifest path, brief path, plan path, relevant review findings, applicable repository instructions, and exact task-workspace or worktree path.
 - Tell the worker to read those artifacts before editing.
