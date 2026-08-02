@@ -176,12 +176,13 @@ or persist the invite URL; send it only to the intended collaborator.
 
 ### 3. Redeem an invite exactly once
 
-POST the exact `inviteUrl` payload to
-`${NABU_URL}/api/shared-spaces/invites/redeem`:
+POST the exact `inviteUrl` payload directly to the one-time invite URL. The
+joining party does not need to know or configure `NABU_URL`, and does not need
+its own Nabu deployment:
 
 ```bash
-INVITE_URL="${NABU_URL}/invites/opaque-secret"
-curl -fsS -X POST "${NABU_URL}/api/shared-spaces/invites/redeem" \
+INVITE_URL="<one-time-invite-url-from-owner>"
+curl -fsS -X POST "${INVITE_URL}" \
   -H 'Content-Type: application/json' \
   --data "{\"inviteUrl\":\"${INVITE_URL}\"}"
 ```
@@ -272,8 +273,8 @@ responses.
 
 - Sharing: preview -> show complete scope -> obtain explicit confirmation ->
   confirm -> distribute one-time invite.
-- Redemption: POST the exact `inviteUrl` payload once -> capture the token
-  securely -> use bearer auth -> never log the secret.
+- Redemption: POST the exact `inviteUrl` payload to the invite URL once ->
+  capture the token securely -> use bearer auth -> never log the secret.
 - Writes: read -> edit/merge -> send revision precondition -> on `409`/`428`
   re-read and retry safely -> verify by canonical path.
 - Private data: authorize before reading or mutating every endpoint and filter
