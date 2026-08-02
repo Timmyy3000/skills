@@ -216,6 +216,35 @@ If a successful redemption is followed by a missing token, treat that as a
 local credential-persistence failure. Check the approved store and its stable
 reference before asking the owner to generate a new one-time invite.
 
+### Verify and enumerate the shared space
+
+Do not report only the scope and expiry after redemption. Immediately after
+persisting the token, verify that the scoped credential can read the shared
+space and enumerate its documents:
+
+1. Use the deployment origin from the invite URL or the persisted deployment
+   metadata for follow-up API requests. This is the inviter's Nabu deployment,
+   not a deployment the joining party must host.
+2. GET `/api/vault/tree` with `Authorization: Bearer <accessToken>` to obtain
+   the accessible tree.
+3. GET `/api/vault/folders?path=<rootPath>` when the shared root is a folder,
+   and use the returned note paths to identify the documents in scope.
+4. For each note the user asks to inspect, GET
+   `/api/vault/notes/by-path?path=<url-encoded-path>` with the same bearer
+   token. Use the canonical path and report the documents actually found.
+
+Example verification request:
+
+```bash
+curl -fsS \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  "${NABU_URL}/api/vault/tree"
+```
+
+If any verification GET fails, report the error and do not claim that shared
+space access is ready. On later turns, retrieve the persisted token and repeat
+the GET before asking for a new invite.
+
 `410 SHARED_SPACE_INVITE_INVALID` means the invite is malformed, expired,
 already redeemed, or its space is expired or revoked. Do not retry alternate
 field names or blindly retry the same invite. If a network failure leaves
@@ -295,7 +324,8 @@ responses.
   confirm -> distribute one-time invite.
 - Redemption: identify durable secret storage -> POST the exact `inviteUrl`
   payload to the invite URL once -> persist the token and metadata securely ->
-  use bearer auth -> never log the secret.
+  GET the shared-space tree and requested documents -> use bearer auth -> never
+  log the secret.
 - Writes: read -> edit/merge -> send revision precondition -> on `409`/`428`
   re-read and retry safely -> verify by canonical path.
 - Private data: authorize before reading or mutating every endpoint and filter
