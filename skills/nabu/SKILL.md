@@ -177,63 +177,50 @@ or persist the invite URL; send it only to the intended collaborator.
 
 ### 3. Redeem an invite exactly once
 
-POST the exact `inviteUrl` payload directly to the one-time invite URL. The
-joining party does not need to know or configure `NABU_URL`, and does not need
-its own Nabu deployment:
+The invite URL identifies the Nabu deployment that owns the shared space. The
+joining party does not need its own Nabu deployment.
+
+Do not GET or POST directly to the invite URL. Derive the deployment origin
+from it, then call that deployment's redemption endpoint:
 
 ```bash
-INVITE_URL="<one-time-invite-url-from-owner>"
-curl -fsS -X POST "${INVITE_URL}" \
+INVITE_URL="<exact-one-time-invite-url>"
+NABU_URL="${INVITE_URL%%/invites/*}"
+
+curl -fsS -X POST \
+  "${NABU_URL}/api/shared-spaces/invites/redeem" \
   -H 'Content-Type: application/json' \
   --data "{\"inviteUrl\":\"${INVITE_URL}\"}"
 ```
 
-The JSON field is exactly `inviteUrl`; do not substitute `invite`, `token`, or
-`inviteToken`. Do not GET the invite URL as the redemption operation. A
-successful `200` returns `sharedSpaceId`, `rootPath`, `permissions`,
-`sharedSpaceExpiresAt`, `accessToken`, and `accessTokenExpiresAt`.
+For example, an invite issued as:
 
-### Persist the redeemed credential
+```text
+https://invite-host.example/invites/opaque-secret
+```
 
-Treat the returned access token as a credential needed for follow-up turns, not
-as a one-turn result.
+must be redeemed through:
 
-1. Before redeeming, identify a durable approved secret store available to the
-   agent across turns, such as the host OS keychain, an agent credential store,
-   or an explicitly configured secret manager. If no such store is available
-   and follow-up access is expected, explain the limitation before redeeming.
-2. Immediately after a successful `200`, store `accessToken` in that secret
-   store under a stable reference keyed by the deployment and
-   `sharedSpaceId`. Never print the token, put it in Markdown, or save it in
-   ordinary workspace files.
-3. Store non-secret metadata alongside the reference: deployment base URL,
+```text
+https://invite-host.example/api/shared-spaces/invites/redeem
+```
+
+The JSON field is exactly `inviteUrl`. Do not substitute `invite`, `token`, or
+`inviteToken`.
+
+A successful `200` response returns `accessToken`, `sharedSpaceId`, `rootPath`,
+`permissions`, `sharedSpaceExpiresAt`, and `accessTokenExpiresAt`. Before
+reporting success:
+
+1. Save the token in an approved credential store that remains available across
+   turns. Use a stable reference keyed by `NABU_URL` and `sharedSpaceId`.
+2. Never print it, place it in chat or Markdown, or save it in an ordinary
+   workspace file.
+3. Save the non-secret metadata with the credential reference: `NABU_URL`,
    `sharedSpaceId`, `rootPath`, permissions, and `accessTokenExpiresAt`.
-4. On later turns, retrieve the token by its reference before asking for a new
-   invite. Check its expiry and use it as
-   `Authorization: Bearer <accessToken>` on normal vault APIs.
-
-If a successful redemption is followed by a missing token, treat that as a
-local credential-persistence failure. Check the approved store and its stable
-reference before asking the owner to generate a new one-time invite.
-
-### Verify and enumerate the shared space
-
-Do not report only the scope and expiry after redemption. Immediately after
-persisting the token, verify that the scoped credential can read the shared
-space and enumerate its documents:
-
-1. Use the deployment origin from the invite URL or the persisted deployment
-   metadata for follow-up API requests. This is the inviter's Nabu deployment,
-   not a deployment the joining party must host.
-2. GET `/api/vault/tree` with `Authorization: Bearer <accessToken>` to obtain
-   the accessible tree.
-3. GET `/api/vault/folders?path=<rootPath>` when the shared root is a folder,
-   and use the returned note paths to identify the documents in scope.
-4. For each note the user asks to inspect, GET
-   `/api/vault/notes/by-path?path=<url-encoded-path>` with the same bearer
-   token. Use the canonical path and report the documents actually found.
-
-Example verification request:
+4. Use the same `NABU_URL` for all subsequent shared-space API requests.
+5. Verify access immediately. Load the token from the credential store into
+   process memory without printing it, then GET the scoped tree:
 
 ```bash
 curl -fsS \
@@ -241,9 +228,19 @@ curl -fsS \
   "${NABU_URL}/api/vault/tree"
 ```
 
-If any verification GET fails, report the error and do not claim that shared
+After the tree GET succeeds:
+
+- GET `/api/vault/folders?path=<url-encoded-rootPath>` when the shared root is a
+  folder and enumerate the documents in scope.
+- For each note the user asks to inspect, GET
+  `/api/vault/notes/by-path?path=<url-encoded-path>` with the same bearer token.
+- Report the documents actually found, not only the scope and expiry.
+
+If a verification GET fails, report the error and do not claim that shared
 space access is ready. On later turns, retrieve the persisted token and repeat
-the GET before asking for a new invite.
+the GET before asking for a new invite. If the token is missing after a
+successful redemption, treat it as a local credential-persistence failure and
+check the approved store before requesting another one-time invite.
 
 `410 SHARED_SPACE_INVITE_INVALID` means the invite is malformed, expired,
 already redeemed, or its space is expired or revoked. Do not retry alternate
@@ -322,10 +319,10 @@ responses.
 
 - Sharing: preview -> show complete scope -> obtain explicit confirmation ->
   confirm -> distribute one-time invite.
-- Redemption: identify durable secret storage -> POST the exact `inviteUrl`
-  payload to the invite URL once -> persist the token and metadata securely ->
-  GET the shared-space tree and requested documents -> use bearer auth -> never
-  log the secret.
+- Redemption: derive `NABU_URL` from the invite URL -> POST the exact
+  `inviteUrl` payload to `${NABU_URL}/api/shared-spaces/invites/redeem` once ->
+  persist the token and metadata securely -> GET the shared-space tree and
+  requested documents -> use bearer auth -> never log the secret.
 - Writes: read -> edit/merge -> send revision precondition -> on `409`/`428`
   re-read and retry safely -> verify by canonical path.
 - Private data: authorize before reading or mutating every endpoint and filter
