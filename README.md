@@ -15,6 +15,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 | `ship-it` | Execute a reviewed plan through PR readiness, with optional harness-agnostic worker delegation. |
 | `code-review` | Review local branch changes before opening or updating a PR. |
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
+| `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 
 ## Install
 
@@ -37,6 +38,7 @@ npx skills add Timmyy3000/skills --skill kickoff
 npx skills add Timmyy3000/skills --skill adversarial-review
 npx skills add Timmyy3000/skills --skill simplicity-review
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
+npx skills add Timmyy3000/skills --skill better-docs
 ```
 
 Install to specific agents:
