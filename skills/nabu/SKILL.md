@@ -41,8 +41,9 @@ as a successful operation.
   they do not use the owner password.
 - A shared token is scoped to exactly one shared space, its permissions, and its
   lease expiry. It cannot be broadened or extended by the collaborator.
-- Never log, persist, or commit passwords, session cookies, invite URLs, access
-  tokens, or agent tokens.
+- Never log or commit passwords, session cookies, invite URLs, access tokens, or
+  agent tokens. Persist credentials only in an approved secret store, never in
+  Markdown, source files, ordinary workspace files, or chat.
 
 ```bash
 curl -fsS -c /tmp/nabu-cookies.txt \
@@ -192,9 +193,28 @@ The JSON field is exactly `inviteUrl`; do not substitute `invite`, `token`, or
 successful `200` returns `sharedSpaceId`, `rootPath`, `permissions`,
 `sharedSpaceExpiresAt`, `accessToken`, and `accessTokenExpiresAt`.
 
-Keep the returned access token in memory or an approved secret store only.
-Never print it, commit it, or place it in Markdown. Use it on normal vault APIs
-as `Authorization: Bearer <accessToken>`.
+### Persist the redeemed credential
+
+Treat the returned access token as a credential needed for follow-up turns, not
+as a one-turn result.
+
+1. Before redeeming, identify a durable approved secret store available to the
+   agent across turns, such as the host OS keychain, an agent credential store,
+   or an explicitly configured secret manager. If no such store is available
+   and follow-up access is expected, explain the limitation before redeeming.
+2. Immediately after a successful `200`, store `accessToken` in that secret
+   store under a stable reference keyed by the deployment and
+   `sharedSpaceId`. Never print the token, put it in Markdown, or save it in
+   ordinary workspace files.
+3. Store non-secret metadata alongside the reference: deployment base URL,
+   `sharedSpaceId`, `rootPath`, permissions, and `accessTokenExpiresAt`.
+4. On later turns, retrieve the token by its reference before asking for a new
+   invite. Check its expiry and use it as
+   `Authorization: Bearer <accessToken>` on normal vault APIs.
+
+If a successful redemption is followed by a missing token, treat that as a
+local credential-persistence failure. Check the approved store and its stable
+reference before asking the owner to generate a new one-time invite.
 
 `410 SHARED_SPACE_INVITE_INVALID` means the invite is malformed, expired,
 already redeemed, or its space is expired or revoked. Do not retry alternate
@@ -273,8 +293,9 @@ responses.
 
 - Sharing: preview -> show complete scope -> obtain explicit confirmation ->
   confirm -> distribute one-time invite.
-- Redemption: POST the exact `inviteUrl` payload to the invite URL once ->
-  capture the token securely -> use bearer auth -> never log the secret.
+- Redemption: identify durable secret storage -> POST the exact `inviteUrl`
+  payload to the invite URL once -> persist the token and metadata securely ->
+  use bearer auth -> never log the secret.
 - Writes: read -> edit/merge -> send revision precondition -> on `409`/`428`
   re-read and retry safely -> verify by canonical path.
 - Private data: authorize before reading or mutating every endpoint and filter
