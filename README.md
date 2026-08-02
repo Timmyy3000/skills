@@ -15,8 +15,6 @@ This repository is the source of truth for team-maintained skills. Install from 
 | `ship-it` | Execute a reviewed plan through PR readiness, with optional harness-agnostic worker delegation. |
 | `code-review` | Review local branch changes before opening or updating a PR. |
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
-| `vercel-react-best-practices` | Review React and Next.js code against Vercel performance guidance. |
-| `web-design-guidelines` | Review UI code for accessibility, UX, and web interface best practices. |
 
 ## Install
 
@@ -87,7 +85,3 @@ Each skill folder must contain a valid `SKILL.md`. The `name` in frontmatter sho
 - Keep `SKILL.md` concise; move large details into `references/`, `scripts/`, or `assets/` when needed.
 - Validate every changed skill before pushing.
 - Prefer pull requests for changes that affect team workflow.
-
-## Attribution
-
-`vercel-react-best-practices` and `web-design-guidelines` are based on skills from [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills), which is MIT licensed.

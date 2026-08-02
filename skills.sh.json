@@ -14,14 +14,6 @@
         "code-review",
         "create-pr"
       ]
-    },
-    {
-      "title": "Frontend Quality",
-      "description": "Skills for React, Next.js, web design, accessibility, performance, and UX quality.",
-      "skills": [
-        "vercel-react-best-practices",
-        "web-design-guidelines"
-      ]
     }
   ]
 }
