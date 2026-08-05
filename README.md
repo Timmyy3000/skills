@@ -9,6 +9,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 | Skill | Purpose |
 | --- | --- |
 | `kickoff` | Start a full human-reviewed or fast agent-reviewed engineering workflow. |
+| `task-master` | Turn roadmaps into executable, verifiable delivery tickets and coordinate their progress. |
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
 | `simplicity-review` | Independently challenge unnecessary plan complexity while preserving required safeguards. |
 | `plan-it` | Create Lavish-backed interactive implementation plans and archive accepted plans as read-only HTML. |
@@ -28,13 +29,14 @@ npx skills add Timmyy3000/skills
 Install the full kickoff workflow:
 
 ```powershell
-npx skills add Timmyy3000/skills --skill kickoff --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
+npx skills add Timmyy3000/skills --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
 ```
 
 Install selected skills:
 
 ```powershell
 npx skills add Timmyy3000/skills --skill kickoff
+npx skills add Timmyy3000/skills --skill task-master
 npx skills add Timmyy3000/skills --skill adversarial-review
 npx skills add Timmyy3000/skills --skill simplicity-review
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
@@ -59,14 +61,14 @@ For a private clone or local testing:
 
 ```powershell
 npx skills add .
-npx skills add . --skill kickoff --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
+npx skills add . --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
 npx skills add . --skill plan-it --agent <agent-name>
 ```
 
 The helper script wraps the same CLI:
 
 ```powershell
-.\scripts\install-local.ps1 -Skills kickoff,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
+.\scripts\install-local.ps1 -Skills kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
 ```
 
 ## Validate

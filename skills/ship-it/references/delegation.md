@@ -7,6 +7,7 @@ Use this reference only when `ship-it` resolves implementation delegation to `al
 Use one repo-level `kickoff.yaml` for this workflow:
 
 - `implementation_delegation_default` optionally stores the user's lasting preference: `never`, `auto`, or `always`.
+- `plan_review.workers` optionally stores one harness-native review selector per harness. It is owned by `adversarial-review` and `simplicity-review` and is shared by both.
 - `ship_it.workers` stores one harness-native worker selector per harness only after delegated implementation needs one.
 
 Use the agent-workspace root already selected by repository instructions and kickoff, such as `.agents/` or `.agent/`. Do not create either convention blindly.
@@ -16,10 +17,14 @@ Example worker configuration:
 ```yaml
 version: 1
 implementation_delegation_default: "auto"
+plan_review:
+  workers:
+    codex:
+      agent: "<review-worker-name>"
 ship_it:
   workers:
     codex:
-      agent: "<native-agent-name>"
+      agent: "<same-or-different-native-agent-name>"
     claude-code:
       agent: "<native-agent-name>"
     opencode:
@@ -27,7 +32,7 @@ ship_it:
       reasoning_effort: "<optional-harness-native-level>"
 ```
 
-The lasting default is optional, and `ship_it` is optional until a worker is configured. Never create the file or an empty section merely because fallback mode is `never`. The current session is the orchestrator and must not be persisted.
+The lasting default is optional, and `plan_review` and `ship_it` are optional until their workers are configured. Never create the file or an empty section merely because fallback mode is `never`. The current session is the orchestrator and must not be persisted.
 
 Each harness entry must use exactly one selector:
 
@@ -35,6 +40,10 @@ Each harness entry must use exactly one selector:
 - `model`: direct per-spawn model selection, with optional `reasoning_effort`, only when the harness has no named-agent requirement.
 
 Never combine `agent` and `model`, duplicate a named agent's model settings in `kickoff.yaml`, or overwrite another harness's entry.
+
+### Sharing Review And Implementation Workers
+
+The review skills resolve `plan_review.workers`; `ship-it` resolves `ship_it.workers`. To use one worker for both, store the exact same selector in both active-harness entries. To use different workers, store different selectors. A named worker's native definition remains the only source of truth for its model, reasoning, instructions, and other settings. Preserve both sections when updating either one.
 
 ## First-Use Worker Bootstrap
 

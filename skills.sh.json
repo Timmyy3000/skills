@@ -7,6 +7,7 @@
       "description": "Skills for planning, reviewing, shipping, and opening pull requests.",
       "skills": [
         "kickoff",
+        "task-master",
         "adversarial-review",
         "simplicity-review",
         "plan-it",

@@ -199,13 +199,13 @@ version: 1
 implementation_delegation_default: "always"
 ```
 
-This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions remain separate. `ship-it` may later add harness-specific worker selectors under `ship_it.workers` when delegated implementation is actually used; kickoff must preserve that section when changing the lasting default.
+This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions remain separate. The review skills may add harness-specific selectors under `plan_review.workers`, and `ship-it` may add implementation selectors under `ship_it.workers`, when those workers are actually used. Kickoff must preserve both sections when changing the lasting default.
 
-Do not create `.agent/` or `.agents/` solely for this setting without following the Folder Convention rules. Do not add an empty `ship_it` section before a worker is configured. A task-specific choice overrides the saved default without changing it.
+Do not create `.agent/` or `.agents/` solely for this setting without following the Folder Convention rules. Do not add empty `plan_review` or `ship_it` sections before a worker is configured. A task-specific choice overrides the saved default without changing it.
 
 Resolve the current task in this order: explicit task-specific choice, then saved repository default, then `never`.
 
-Record both the resolved value and its source in the work brief. This preference controls only how `kickoff` hands implementation to `ship-it`; plan reviews remain independent.
+Record both the resolved value and its source in the work brief. This preference controls only how `kickoff` hands implementation to `ship-it`; the review skills independently resolve their dedicated worker under `plan_review.workers`.
 
 Planning mode meanings:
 
@@ -233,6 +233,7 @@ Use this structure:
 - Type:
 - Implementation delegation:
 - Delegation source:
+- Review worker:
 - Planning mode:
 - Worktree manager:
 - Branch:
@@ -396,7 +397,7 @@ For pure investigations, do not force full planning unless the investigation is 
 
 ## Adversarial Plan Review
 
-Before simplicity review or user approval, invoke `adversarial-review` in a fresh agent session when the environment supports fresh sessions.
+Before simplicity review or user approval, invoke `adversarial-review` through its configured dedicated worker in a fresh session when the environment supports workers. Let the review skill resolve or bootstrap `plan_review.workers` for the active harness; kickoff must not choose a different worker or persist worker settings itself.
 
 Pass only:
 
@@ -405,6 +406,7 @@ Pass only:
 - The plan artifact or plan text.
 - Relevant source specs, tickets, logs, docs, screenshots, and code references.
 - A short instruction to review the plan for readiness and return structured findings.
+- The active harness, task-workspace path, and existing `kickoff.yaml` path when available, so the review skill can resolve its worker without relying on conversation history.
 
 Do not pass expected findings, private conclusions, or the intended fix. The review must be independent.
 
@@ -428,7 +430,7 @@ If meaningful gaps exist, revise the plan or ask targeted questions. Do not proc
 
 ## Simplicity Plan Review
 
-After adversarial findings have been reconciled and the plan has been revised, invoke `simplicity-review` in a fresh agent session when supported.
+After adversarial findings have been reconciled and the plan has been revised, invoke `simplicity-review` through the same configured `plan_review.workers` selector in a new fresh session when supported. The selector may match or differ from `ship_it.workers`, but both review stages use the same review entry by default.
 
 Pass only:
 
@@ -438,6 +440,7 @@ Pass only:
 - The complete adversarial-review output and the disposition of each meaningful finding.
 - Relevant repository instructions, conventions, source documents, and code references.
 - A short instruction to find unnecessary complexity while preserving every required outcome and accepted risk control.
+- The active harness, task-workspace path, and existing `kickoff.yaml` path when available.
 
 Do not pass expected simplifications or the calling agent's preferred architecture. The reviewer should independently trace proposed complexity to requirements, repository policy, demonstrated risk, or accepted adversarial concerns.
 
@@ -465,7 +468,7 @@ If the user asks to continue investigating, keep the workflow in investigation m
 
 If the user asks to defer, stop and record the current state in the brief.
 
-Do not add extra approval gates after full-path approval or fast-path internal review. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, first-use worker configuration selected by the user, or explicit user instruction.
+Do not add extra approval gates after full-path approval or fast-path internal review. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, first-use review or implementation worker configuration selected by the user, or explicit user instruction.
 
 ## Execution Handoff
 
@@ -474,6 +477,7 @@ When the full-path plan is approved or the fast-path plan passes both reviews, i
 - Accepted Lavish plan path or reviewed Markdown plan path.
 - Work brief path.
 - Adversarial and simplicity review decisions.
+- Review-worker selector and configuration source when one was resolved.
 - Worktree manager, branch, and worktree path.
 - Implementation delegation and its source.
 - Repository `kickoff.yaml` path when one exists.
