@@ -47,7 +47,7 @@ Resolve the mode in this order when kickoff did not already provide it:
 
 1. Explicit task-specific user choice.
 2. Saved `implementation_delegation_default` in the discovered repo-level `kickoff.yaml`.
-3. `never`.
+3. `always`.
 
 When a direct `ship-it` invocation contains an explicit lasting instruction, persist it in `kickoff.yaml` using kickoff's folder and preservation rules before resolving the task.
 
@@ -120,8 +120,8 @@ For both paths:
 
 ## Rules
 
-- Default implementation delegation to `never` when kickoff supplies no explicit or saved preference.
-- Never spawn implementation workers unless the user selected `auto` or `always` for the task or explicitly saved that repository default.
+- Default implementation delegation to `always` when kickoff supplies no explicit or saved preference.
+- Never spawn implementation workers only when the user selected `never`/no subagents for the task or explicitly saved that repository default.
 - Never treat implementation delegation as permission to skip independent plan reviews.
 - Never persist an orchestrator model; the orchestrator is the current agent session.
 - Never hardcode Codex, Claude Code, OpenCode, or provider-specific model names into the portable workflow.

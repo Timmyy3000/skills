@@ -32,7 +32,7 @@ ship_it:
       reasoning_effort: "<optional-harness-native-level>"
 ```
 
-The lasting default is optional, and `plan_review` and `ship_it` are optional until their workers are configured. Never create the file or an empty section merely because fallback mode is `never`. The current session is the orchestrator and must not be persisted.
+The lasting default is optional, and `plan_review` and `ship_it` are optional until their workers are configured. Never create the file or an empty section merely because fallback mode is `always`. The current session is the orchestrator and must not be persisted.
 
 Each harness entry must use exactly one selector:
 

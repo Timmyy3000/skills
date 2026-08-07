@@ -1,35 +1,34 @@
 ---
 name: kickoff
-description: Start an IC engineering workflow from initial intent through planning, independent adversarial and simplicity reviews, implementation, pull request creation, and review monitoring. Use when the user invokes /kickoff or $kickoff, wants to start feature work, bug fixing, improvements, refactors, hotfixes, investigations, or explorations, or asks for either a full human-reviewed plan or a fast agent-reviewed Markdown plan before execution.
+description: Start an IC engineering workflow from initial intent through planning, independent adversarial and simplicity reviews, implementation, pull request creation, and review monitoring. Use when the user invokes /kickoff or $kickoff, wants to start feature work, bug fixing, improvements, refactors, hotfixes, investigations, or explorations, or asks for a full human-reviewed plan or a fast agent-reviewed Markdown plan before execution. When worker configuration is missing, require first-use subagent configuration before routing work.
 ---
 
 # Kickoff
 
-Guide an engineer from an initial work idea to a clear brief, proportionate plan, implementation, pull request, and monitored review loop.
+Guide an engineer from an initial idea to a durable brief, proportionate plan, implementation, pull request, and monitored review loop.
 
-Keep this skill thin. Own intake, context capture, planning-mode and implementation-delegation selection, routing, and any required plan approval. Do not duplicate `plan-it`, `adversarial-review`, `simplicity-review`, `ship-it`, `code-review`, or `create-pr`.
+Keep this skill thin. Own intake, repository context, worker-preference gating, planning-mode selection, routing, and any required plan approval. Delegate worker discovery and dispatch details to `adversarial-review`, `simplicity-review`, and `ship-it`; delegate plan creation, code review, and pull-request mechanics to `plan-it`, `code-review`, and `create-pr`.
 
 ## Rules
 
 - Treat `/kickoff` as the user-facing invocation.
 - Verify required workflow skills before routing work to them.
-- Set up or select one isolated task worktree before writing planning artifacts.
+- Establish one isolated task worktree before writing planning artifacts.
 - Create durable context before planning, implementation, or investigation.
 - Ask only for information that materially changes scope, risk, priority, or execution.
-- Prefer repo evidence over assumptions. Read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
-- Use the full planning path by default for substantial, ambiguous, or risky work. After the user approves its reviewed plan, continue through implementation, PR creation, and review monitoring without routine confirmations.
-- Use the fast planning path when the user explicitly asks to skip human plan review or when the work is clearly small, bounded, and low risk. Skip only the Lavish artifact and human plan-approval gate; never skip the Markdown plan or independent reviews.
-- Do not start implementation until the full-path plan is approved or the fast-path plan has passed adversarial and simplicity review.
+- Prefer repository evidence over assumptions: read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
+- Default implementation delegation to `always`: use subagents unless the user explicitly chooses `never`/no subagents for the task. Resolve `auto` only when the user or repository default selects it.
+- Keep implementation delegation separate from independent plan reviews. Choosing no implementation worker must not silently disable review quality or change the review skills' worker contract.
+- Make missing worker configuration a first-use gate; do not silently use the current orchestrator, an arbitrary model, or a fallback worker.
+- Use full planning for substantial, ambiguous, or risky work. Use fast planning only when explicitly requested or when the work is clearly small, bounded, and low risk.
+- Do not start implementation until the full-path plan is approved or the fast-path plan has passed both independent reviews.
 - Keep the work brief updated as decisions are made.
-- Default implementation delegation to `never`. Use `auto` or `always` only when the user explicitly selects it for this task or has explicitly saved it as the repository default.
-- Treat implementation delegation as a `ship-it` execution preference only. It does not disable or alter independent adversarial or simplicity plan reviews.
-- Delegate Lavish command selection to `plan-it`. Preserve its configured fork package and do not invoke the published `lavish-axi` package directly from kickoff.
-- Escalate from fast to full planning if investigation reveals material ambiguity, broader scope, or risk. If the user explicitly requested no human plan review, keep a Markdown plan and ask only for the specific product, safety, or authorization decision that blocks execution.
-- Stop after plan approval only for real blockers: missing credentials, unavailable required systems, destructive actions, broad scope changes, unresolved product decisions, failed external authentication, or explicit user pause.
+- After approval or fast-path review, continue through `ship-it`, PR creation, and review monitoring without routine confirmations.
+- Stop only for a real blocker, required authority, failed authentication, unresolved product decision, first-use worker configuration, or explicit user pause.
 
 ## Dependency Check
 
-Before starting intake, verify that the required workflow skills are available:
+Before intake, verify these skills are available:
 
 - `plan-it`
 - `adversarial-review`
@@ -38,188 +37,119 @@ Before starting intake, verify that the required workflow skills are available:
 - `code-review`
 - `create-pr`
 
-Check the active skill list and common local skill paths:
+Check the active skill list, the configured agent skills directory, `~/.agents/skills/<skill-name>`, `<workspace>/.agents/skills/<skill-name>`, and the current skills repository when the user is working inside one.
 
-- The active agent's configured skills directory.
-- `~/.agents/skills/<skill-name>`
-- `<workspace>/.agents/skills/<skill-name>`
-- The current skills repository, when the user is working inside one.
-
-If a required skill is missing:
-
-1. Tell the user which dependency is missing.
-2. Do not proceed into a workflow phase that needs the missing dependency unless the user explicitly asks for a partial intake only. `plan-it` is required for full planning; both review skills and the delivery skills are required for either implementation path.
-3. Suggest installing the full workflow bundle:
+If a required skill is missing, name it and stop before entering a dependent phase unless the user explicitly requests a partial read-only investigation. Suggest the full workflow installation:
 
 ```powershell
 npx skills add Timmyy3000/skills --skill kickoff --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
 ```
 
-For local testing from this repository, suggest:
+For local testing, use:
 
 ```powershell
 npx skills add . --skill kickoff --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
 ```
 
-If the user only wants an investigation that will not plan, implement, review, or create a PR, `kickoff` may continue without all delivery dependencies after clearly stating the missing skills and limiting the workflow to read-only investigation.
+## Worktree And Artifact Setup
 
-## Worktree Setup
+Before writing the brief, discover the repository's conventions and choose:
 
-Before creating the work brief, ask for worktree and branch preferences:
+- Worktree manager: `forest` (recommended) or ordinary `git`.
+- Branch/worktree name: the user's name or `auto`.
+- Base branch/ref, if different from the repository default.
+- The folder for durable agent/planning artifacts.
+- The per-task workspace for temporary coordination artifacts.
 
-- Worktree manager: `forest` or `git`. Recommend `forest` and default to it when the user does not choose.
-- Branch/worktree name: ask what the user wants to name the branch or worktree. Default to `auto`, where the agent creates a slug and branch from the work type, title, and repo conventions.
-- Base branch or ref, if different from the repo default.
+Use one isolated worktree per kickoff effort. Run planning, both reviews, and `ship-it` from that same worktree.
 
-Use one isolated worktree per kickoff effort. Run planning, `adversarial-review`, `simplicity-review`, and `ship-it` from that same worktree so multiple kickoff efforts can happen in parallel without colliding.
+### Forest
 
-### Forest Mode
+When using Forest:
 
-When using Forest, follow the Forest agent contract:
-
-1. Run `forest status --json` before creating or selecting a worktree. If `--json` is unavailable in the installed Forest version, use `forest status` and avoid scraping more than needed.
+1. Run `forest status --json` before creating or selecting a worktree; use `forest status` if JSON is unavailable.
 2. Never reuse another agent's dirty worktree.
-3. Create the worktree with Forest:
+3. Create the worktree with the selected branch and base ref, for example `forest add -b <branch-name> --from <base-ref> --agent <agent-name> --json`; if the user supplied a worktree name instead of a branch, use `forest add <worktree-name> --from <base-ref> --agent <agent-name> --json`. Omit `--from` for the repository default.
+4. Mark activity from inside it with `forest mark --phase working --agent <agent-name> --note "kickoff planning"`.
+5. If Forest reports inconsistent state, run `forest doctor --json` and report the findings; do not repair state manually.
+6. Remove worktrees only through `forest close` when the user asks or integration is proven.
 
-```powershell
-forest add -b <branch-name> --from <base-ref> --agent <agent-name> --json
-```
+If Forest is unavailable, ask whether to install it, use ordinary Git worktrees, or continue without a worktree for a read-only investigation.
 
-If the user chose a simple worktree name instead of a branch name, use:
+### Ordinary Git
 
-```powershell
-forest add <worktree-name> --from <base-ref> --agent <agent-name> --json
-```
+When using ordinary Git, inspect `git status --short --branch` and `git worktree list --porcelain`, choose a repository-conforming path, and create a worktree with `git worktree add`. If no path convention exists, ask before creating one. Never use ordinary Git cleanup commands for Forest-managed worktrees.
 
-Omit `--from` when using the repo default base. Use `--fetch` only when the base branch cannot be resolved locally or the user asks to refresh remotes.
-
-4. Read the returned worktree path and do all kickoff work inside that path.
-5. Mark activity from inside the worktree:
-
-```powershell
-forest mark --phase working --agent <agent-name> --note "kickoff planning"
-```
-
-6. Do not remove Forest worktrees manually. Cleanup must go through `forest close` only when the user asks or the work is proven integrated.
-7. If Forest reports inconsistent state, run `forest doctor --json` and report the findings rather than repairing state manually.
-
-When Forest is missing, tell the user and ask whether to install Forest, switch to ordinary git worktrees, or continue without a worktree for a read-only investigation.
-
-### Git Worktree Mode
-
-When the user chooses ordinary git, use Git directly and keep the same isolation principle:
-
-1. Inspect `git status --short --branch` and `git worktree list --porcelain`.
-2. Choose or confirm a branch name.
-3. Choose or confirm a worktree path by repo convention. If none exists, ask before creating a new convention.
-4. Create the worktree:
-
-```powershell
-git worktree add -b <branch-name> <worktree-path> <base-ref>
-```
-
-If the branch already exists, omit `-b` and add the branch directly.
-
-Do not use ordinary git cleanup commands for Forest-managed worktrees.
-
-## Folder Convention
-
-Before writing any kickoff files, discover where the target repo already stores agent or planning artifacts.
+### Folder Convention
 
 Choose the first matching convention:
 
-1. Explicit repo instructions in `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, `CLAUDE.md`, contributing docs, planning guides, or existing templates.
+1. Explicit repo instructions or templates (`AGENTS.md`, `CLAUDE.md`, contributing/planning docs, and similar).
 2. Existing plan folders such as `docs/agent-plans/`, `docs/plans/`, `plans/`, `planning/`, or `agent-plans/`.
-3. Existing agent workspace folders. Prefer whichever already exists in the target repo:
-   - `.agents/`
-   - `.agent/`
-4. If both `.agents/` and `.agent/` exist, use the one that already contains planning, workflow, or task files. If unclear, ask the user before creating new files.
-5. If no convention exists, ask before creating one. Suggest `.agent/kickoff/` as the conservative default because it is local, hidden, and clearly agent-owned.
+3. An existing `.agents/` or `.agent/` folder, preferring the one that already contains workflow or planning files.
+4. If none exists, ask before creating a convention; suggest `.agent/kickoff/` as a conservative default.
 
-Do not create `.agent/` or `.agents/` merely because this skill mentions them. Follow the target repo's existing convention first.
+Do not create `.agent/` or `.agents/` merely because this skill mentions them.
 
-## Task Workspace
+### Task Workspace
 
-After selecting the folder convention and before writing the work brief, establish the task-workspace path used for temporary coordination artifacts.
+Prefer an existing per-task convention. Otherwise use the directory selected for the brief without inventing another nested convention. Keep it inside the kickoff worktree, record its exact path in the brief, and pass it to `ship-it`. Preserve durable plans and repository-required records; let `ship-it` clean only temporary artifacts it clearly owns.
 
-- Prefer an existing per-task workspace convention when the repository has one.
-- Otherwise use the directory selected for the work brief without inventing another nested convention.
-- Keep the task workspace inside the kickoff-provided worktree.
-- Record the exact path in the work brief and hand it to `ship-it`.
-- Keep it available through planning, reviews, implementation, integration, and PR readiness. Let `ship-it` clean up only temporary artifacts it clearly owns; preserve durable plans and repository-required records.
+## Required Worker Configuration Gate
+
+Run this gate before selecting the planning mode or invoking a review or implementation skill.
+
+1. Determine the active harness and whether it can spawn workers. Locate the repository's existing `kickoff.yaml` using the folder convention; do not create a new agent folder solely for configuration.
+2. Resolve implementation delegation in this order: explicit task choice, saved `implementation_delegation_default`, then the workflow fallback `always`. Accept `subagents` as `always` and `solo` as `never`, but record only `always`, `auto`, or `never`.
+3. If the user explicitly says no subagents for this task, resolve implementation delegation to `never` and do not ask for an implementation worker. A lasting instruction such as "never use subagents" may be saved as the repository default; a task-specific choice must not change it.
+4. Otherwise, when `plan_review.workers.<harness>` or `ship_it.workers.<harness>` is missing, require first-use configuration before proceeding. Present the default clearly: "Use subagents: yes (default; say no to opt out)." Ask which review worker/model and implementation worker/model to use, or whether the exact same selector should be reused for both.
+5. Before asking, let the owning skill discover available native workers. Use `adversarial-review` for review-worker bootstrap and `ship-it`'s `references/delegation.md` for implementation-worker bootstrap. Those skills own selector shapes, model/reasoning validation, native worker creation, persistence, and revalidation; do not duplicate their detailed dispatch contracts here.
+6. If a valid selector already exists, confirm or reuse it rather than asking for its model again. If a harness dispatches directly by model, collect only the supported model and optional reasoning setting. Never persist the current orchestrator as a worker.
+7. If workers are required by the resolved `always` mode but the active harness cannot spawn them, stop and ask the user to choose a supported harness or explicitly opt out. Do not silently fall back to orchestrator-only implementation. Review skills may use their documented current-session fallback only when that fallback is explicitly accepted and recorded as non-independent.
+8. Record the resolved delegation, review selector, implementation selector, and source of each in the brief. Pass them to the owning skills; they must preserve unrelated configuration and inactive harnesses.
+
+The first-use prompt is mandatory when configuration is absent; lack of an explicit "yes" is not permission to skip it. An explicit no suppresses only the worker configuration it actually declines. Keep independent plan reviews enabled unless the user separately and explicitly declines worker-based reviews.
+
+### Single Repository Configuration
+
+Use one repository-level `kickoff.yaml`, under the discovered agent-workspace root, for this workflow. It may contain:
+
+- `implementation_delegation_default`: an explicit lasting default.
+- `plan_review.workers`: owned by `adversarial-review` and `simplicity-review`.
+- `ship_it.workers`: owned by `ship-it`.
+
+Do not create a separate `ship-it.yaml`, empty worker sections, inactive harness entries, or duplicated named-worker model settings. Preserve every unrelated key when updating the file. A fallback of `always` need not be written unless the user gives a lasting instruction.
 
 ## Intake
 
-Classify the work as one of:
+Classify the work as `feature`, `bug`, `improvement`, `refactor`, `hotfix`, `investigation`, or `exploration`.
 
-- `feature`: new user-facing or system capability.
-- `bug`: broken, regressed, flaky, or incorrect behavior.
-- `improvement`: measurable upgrade to UX, performance, reliability, cost, developer experience, or operability.
-- `refactor`: internal restructuring where behavior should stay the same.
-- `hotfix`: urgent production fix with compressed planning and validation.
-- `investigation`: understand how something works, why behavior occurs, where logic lives, or what options exist before deciding whether to change code.
-- `exploration`: spike, feasibility check, prototype, or unknown-scope research.
+Ask once for the smallest useful set of answers:
 
-Ask for the smallest useful set of answers:
+- Short title and work type, when not obvious.
+- Objective and why it matters.
+- Timeline or production target, if any.
+- Constraints, owners, dependencies, affected repositories, and existing evidence.
+- Implementation delegation choice (`always` default, `auto`, or explicit `never`).
+- Planning mode (`auto`, `full`, or `fast`).
+- Worktree manager, branch/worktree name, and base ref.
+- The required worker configuration gate above when active selectors are missing.
 
-- Work name or short title.
-- Work type if not obvious.
-- Objective and reason this matters.
-- Desired timeline or production target date, if any.
-- Known constraints, owners, dependencies, and affected repos.
-- Existing specs, tickets, docs, screenshots, logs, metrics, or links.
-- Implementation delegation: `never`, `auto`, or `always`.
-- Planning mode: `auto`, `full`, or `fast`.
-- Worktree manager: `forest` recommended, or ordinary `git`.
-- Branch/worktree name: user-provided name or `auto`.
-Ask the user for initial input once, then proceed with sensible defaults unless a blocker or first-use worker prerequisite appears. Do not repeatedly pause for preferences that can be inferred safely.
+Do not repeatedly pause for preferences that can be inferred safely. Resolve a task-specific choice first, then a saved repository preference, then the fallback default. Record both the value and its source.
 
-Implementation delegation meanings:
+For type-specific intake, ask only what applies:
 
-- `never`: do not spawn implementation workers. This is the default when no explicit task choice or saved repository preference exists.
-- `auto`: allow `ship-it` to decide from the accepted plan. Lean toward delegation when the work contains bounded independent tasks, but avoid it when coordination would cost more than it saves.
-- `always`: require `ship-it` to delegate at least one bounded implementation task when the active harness supports workers.
-
-Offer these choices during initial intake without making the user answer. If the user does not choose, resolve the current task from the saved repository preference and otherwise use `never`.
-
-Accept `subagents` as a legacy alias for `always` and `solo` as a legacy alias for `never`, but record only the current names.
-
-### Lasting Delegation Default
-
-Recognize explicit durable instructions such as:
-
-- "Always use subagents" -> save `always`.
-- "Never use subagents" -> save `never`.
-- "Choose subagents automatically" -> save `auto`.
-
-Store the repository default only after such an explicit lasting instruction. Use the repo's discovered agent-workspace convention and write `kickoff.yaml` under that root, for example `.agents/kickoff.yaml` or `.agent/kickoff.yaml`:
-
-```yaml
-version: 1
-implementation_delegation_default: "always"
-```
-
-This is the workflow's only repository-owned orchestration configuration file; harness-native worker definitions remain separate. The review skills may add harness-specific selectors under `plan_review.workers`, and `ship-it` may add implementation selectors under `ship_it.workers`, when those workers are actually used. Kickoff must preserve both sections when changing the lasting default.
-
-Do not create `.agent/` or `.agents/` solely for this setting without following the Folder Convention rules. Do not add empty `plan_review` or `ship_it` sections before a worker is configured. A task-specific choice overrides the saved default without changing it.
-
-Resolve the current task in this order: explicit task-specific choice, then saved repository default, then `never`.
-
-Record both the resolved value and its source in the work brief. This preference controls only how `kickoff` hands implementation to `ship-it`; the review skills independently resolve their dedicated worker under `plan_review.workers`.
-
-Planning mode meanings:
-
-- `auto`: choose `fast` only when the work is small, clear, bounded, and low risk; otherwise choose `full`.
-- `full`: create a Lavish-backed plan through `plan-it`, run both independent reviews, and ask the user to approve the reviewed plan.
-- `fast`: create a concise Markdown plan, run both independent reviews, skip Lavish and the human plan-approval gate, then continue directly to `ship-it`.
-
-Honor an explicit request for `fast` planning even when the work is larger, but state the risk and keep the internal plan and reviews proportional to the actual scope. Fast planning never bypasses approval for destructive actions, credentials, external side effects, unresolved product decisions, or other actions that require user authority.
+- `feature`: actor, desired workflow, must-haves, out-of-scope behavior, states/permissions, rollout, and unacceptable failure modes.
+- `bug`: actual versus expected behavior, impact/severity, reproduction/environment, evidence, first-seen timing, and urgency/rollback.
+- `improvement`: current baseline, measurable target, before/after method, acceptable tradeoffs, and suspected scope.
+- `refactor`: boundary, behavior invariants, payoff, preservation checks, migrations/compatibility, and excluded files or systems.
+- `hotfix`: production impact, urgency, smallest fix, mitigation/rollback, release validation, and approvers.
+- `investigation`: question, prompt/evidence, relevant systems, satisfactory answer, desired output, and whether code changes are allowed.
+- `exploration`: hypothesis, timebox, evidence, decision criteria, prototype tolerance, and follow-up path.
 
 ## Work Brief
 
-Create or update a markdown work brief after choosing the correct folder convention.
-
-Use this filename pattern:
+Create or update a durable Markdown brief after selecting the folder convention:
 
 `<work-slug>.md`
 
@@ -234,6 +164,9 @@ Use this structure:
 - Implementation delegation:
 - Delegation source:
 - Review worker:
+- Review worker source:
+- Implementation worker:
+- Implementation worker source:
 - Planning mode:
 - Worktree manager:
 - Branch:
@@ -264,240 +197,54 @@ Use this structure:
 ## Execution Notes
 ```
 
-For investigations, replace `Requirements` with `Questions To Answer` and replace `Acceptance Criteria` with `Done Criteria`.
+For investigations, use `Questions To Answer` and `Done Criteria` instead of `Requirements` and `Acceptance Criteria`. Use absolute dates and state whether a target looks feasible, risky, or unrealistic for the known scope and validation needs.
 
-Use absolute dates when discussing timeline feasibility. Compare any target date with the current date and state whether the timeline looks feasible, risky, or unrealistic based on known scope and validation needs.
+## Planning
 
-## Type-Specific Questions
+Choose the mode after inspecting enough repository evidence:
 
-For `feature`, ask:
+- `auto`: choose `fast` only when behavior and acceptance criteria are clear, scope is narrow, repository patterns are established, no material product/architecture/security/data/compatibility decision is open, and validation plus rollback are concrete.
+- `full`: use `plan-it` for a Lavish-backed plan, run both independent reviews, then ask the user to approve the reviewed plan.
+- `fast`: write a concise Markdown plan, run both independent reviews, skip Lavish and the human plan-approval gate, then continue to `ship-it`.
 
-- Who is the user or system actor?
-- What workflow should exist when this is done?
-- What are the must-have requirements?
-- What is explicitly out of scope?
-- What permissions, states, edge cases, and failure modes matter?
-- How should this be rolled out, measured, documented, or supported?
-- What would make the feature unacceptable even if it technically works?
+Honor an explicit `fast` request but state the risk and keep the plan/reviews proportional. Never use fast-path handling to bypass approval for destructive actions, credentials, external side effects, unresolved product decisions, or other actions requiring authority. Upgrade `auto` to `full` when later evidence increases scope or risk.
 
-For `bug`, ask:
+For full planning, invoke `plan-it` with the brief, task workspace, work type, worker/delegation decisions, source evidence, timeline, constraints, and open decision points. Let `plan-it` own the Lavish artifact and its detailed content standard.
 
-- What happened, and what should have happened instead?
-- Who or what is affected?
-- How severe is the impact?
-- Can it be reproduced? If yes, what are the exact steps and environment?
-- When was it first noticed?
-- Are there logs, screenshots, traces, failing tests, or suspect commits?
-- Is a small hotfix needed, or can this follow the normal planning flow?
+For fast planning, put the internal plan in the brief or the repository's established sibling plan location. Include objective/scope, the simplest viable approach, affected files/systems, acceptance criteria, focused validation, material risks, rollback, and unresolved decisions. Add type-appropriate evidence, regression, measurement, preservation, timebox, or follow-up criteria.
 
-For `improvement`, ask:
+Do not force full planning for a small read-only investigation; a concise brief and final findings may be sufficient.
 
-- What is the current pain or baseline?
-- What metric, behavior, or experience should improve?
-- What target outcome would count as success?
-- How will before/after be measured?
-- What tradeoffs are acceptable?
-- Which areas are suspected to matter, and which areas are out of scope?
+## Independent Plan Reviews
 
-For `refactor`, ask:
+After the plan exists, invoke `adversarial-review` through its configured review worker in a fresh session when the harness supports workers. Pass only the skill, brief, plan, relevant evidence, active harness, task workspace, and `kickoff.yaml` path. The review skill owns worker bootstrap and structured output.
 
-- What code, boundary, or system needs to change?
-- What behavior must remain unchanged?
-- What is the payoff: maintainability, performance, testability, reliability, or future work?
-- What tests or checks prove behavior is preserved?
-- Are migrations, compatibility concerns, or rollout risks involved?
-- What files or systems should not be touched?
+Read the result, record each meaningful finding's disposition in the brief, and resolve every `Blocker` and `Major` before continuing. In full mode, feed accepted revision feedback back to `plan-it`; in fast mode, revise the Markdown plan directly. If no fresh worker is available, use the review skill's explicit current-session fallback and state that independence was unavailable.
 
-For `hotfix`, ask:
+After adversarial findings are reconciled and the plan is revised, invoke `simplicity-review` through the same configured `plan_review.workers` entry in a new fresh session when supported. Pass the original brief, revised plan, complete adversarial output and dispositions, relevant evidence, active harness, task workspace, and config path. Reconcile every simplification, removal/deferment, and conflict; protect accepted safeguards and record rejected simplifications with rationale.
 
-- What is the production impact?
-- How urgent is the fix, and what is the target release window?
-- What is the smallest acceptable fix?
-- Is there a rollback or mitigation available?
-- What validation is required before release?
-- Who needs to approve or be informed?
+If a material conflict remains, ask only for the owner decision needed to resolve it. If the user asks to defer or continue investigating, record the current phase and findings in the brief instead of starting implementation.
 
-For `investigation`, ask:
+Re-run simplicity review only when revisions materially change architecture, scope, or risk controls. Do not create review loops for wording or optional polish.
 
-- What question are we trying to answer?
-- What prompted the investigation?
-- What code paths, systems, docs, tickets, logs, or user reports may be relevant?
-- What would count as a satisfactory answer?
-- Should the output be an explanation, a recommendation, a diagram, a follow-up plan, or a proposed implementation?
-- Is code change allowed, or is this read-only until the user decides?
+## Approval And Execution Handoff
 
-For `exploration`, ask:
+For full mode, ask the user to approve or revise the reviewed plan. If revisions are requested, apply them through `plan-it` and repeat the required review/approval path. For fast mode, do not ask for plan approval; start execution after both reviews pass.
 
-- What hypothesis or option are we testing?
-- What is the timebox?
-- What evidence is needed to decide?
-- Is a prototype acceptable?
-- What should happen after the spike: plan, implement, discard, or document?
+When execution is authorized, invoke `ship-it` with:
 
-## Planning Mode Selection
+- The accepted Lavish plan or reviewed Markdown plan.
+- The brief and task-workspace path.
+- Adversarial/simplicity findings and dispositions.
+- Worktree manager, branch, worktree path, and target branch.
+- Resolved implementation delegation and source.
+- Review and implementation selectors plus their configuration source.
+- The `kickoff.yaml` path, validation expectations, risks, and open questions.
 
-Choose the planning mode after inspecting enough repository evidence to understand the likely scope.
+Let `ship-it` own bounded implementation delegation, integration, validation, `code-review`, `create-pr`, PR creation, and the five-minute review monitor. Do not add approval gates after full-path approval or fast-path review except for a real blocker, destructive action, credential/auth issue, required product decision, first-use worker configuration, or explicit user pause.
 
-In `auto`, choose `fast` only when all of these are true:
+Kickoff is complete only when `ship-it` reports the PR ready to merge, merged, explicitly canceled, or blocked by a concrete external condition - not merely when a PR is opened.
 
-- The expected behavior and acceptance criteria are clear.
-- The change is bounded to a narrow area and can follow established repository patterns.
-- No unresolved product, architecture, permission, security, data-migration, or compatibility decision exists.
-- No broad refactor, public contract change, destructive operation, or cross-repo rollout is expected.
-- Validation is concrete and rollback or reversion is straightforward.
+## Phase Updates
 
-Work type alone does not qualify a change for fast planning. A bug or performance improvement may still require the full path when its blast radius or solution is uncertain.
-
-Record the selected mode and reason in the work brief. When `auto` selects `fast`, report the choice but do not pause for confirmation. Upgrade to `full` if later evidence invalidates the fast-path criteria.
-
-## Planning Handoff
-
-Once the brief has enough context, create the plan required by the selected mode.
-
-### Full Planning
-
-Invoke `plan-it` to create the Lavish-backed review artifact.
-
-Pass `plan-it`:
-
-- Work brief path.
-- Task-workspace path.
-- Work type and implementation-delegation preference.
-- Source docs, specs, links, and evidence.
-- Timeline constraints.
-- Non-negotiables.
-- Open questions that should appear as decision points.
-
-### Fast Planning
-
-Create a concise Markdown plan in the work brief's `Plan` section or a sibling plan file when the repository already has that convention. Do not create a Lavish artifact or invoke `plan-it` merely to produce HTML.
-
-Include only:
-
-- Objective and bounded scope.
-- Simplest viable approach and why it fits repository conventions.
-- Expected files or systems affected.
-- Acceptance criteria.
-- Focused validation commands or checks.
-- Material risks, rollback, and unresolved decisions.
-
-Mark it as an internal fast-path plan and continue directly into independent review without asking the user to review it.
-
-Require the plan to include type-specific validation:
-
-- Features need acceptance coverage, state coverage, and rollout notes.
-- Bugs need reproduction, regression coverage where practical, and fix verification.
-- Improvements need before/after measurement.
-- Refactors need behavior-preservation checks and rollback notes.
-- Hotfixes need minimized scope, release risk, validation, and rollback notes.
-- Investigations need evidence sources, findings format, confidence level, and recommended next steps.
-- Explorations need timebox, decision criteria, and follow-up paths.
-
-For pure investigations, do not force full planning unless the investigation is large enough to need a reviewable plan. A concise investigation brief plus final findings may be enough.
-
-## Adversarial Plan Review
-
-Before simplicity review or user approval, invoke `adversarial-review` through its configured dedicated worker in a fresh session when the environment supports workers. Let the review skill resolve or bootstrap `plan_review.workers` for the active harness; kickoff must not choose a different worker or persist worker settings itself.
-
-Pass only:
-
-- The `adversarial-review` skill.
-- The work brief path and contents.
-- The plan artifact or plan text.
-- Relevant source specs, tickets, logs, docs, screenshots, and code references.
-- A short instruction to review the plan for readiness and return structured findings.
-- The active harness, task-workspace path, and existing `kickoff.yaml` path when available, so the review skill can resolve its worker without relying on conversation history.
-
-Do not pass expected findings, private conclusions, or the intended fix. The review must be independent.
-
-Read the adversarial review output and resolve `Blocker` and `Major` findings before simplicity review. In full planning, feed accepted `Plan Feedback For Revision` back into `plan-it`. In fast planning, revise the Markdown plan directly. Update the work brief with each meaningful finding's accepted, rejected, or risk-accepted disposition and rationale.
-
-If a fresh agent session is unavailable, run `adversarial-review` in the current session and clearly state that the review was not independent.
-
-Check for:
-
-- Missing or vague acceptance criteria.
-- Requirements not represented in phases.
-- Unrealistic timeline or sequencing.
-- Missing reproduction or regression coverage for bugs.
-- Missing baseline or measurement plan for improvements.
-- Refactor scope that changes behavior without an explicit decision.
-- Investigation outputs that do not answer the original question.
-- Hidden dependencies, migrations, permissions, data integrity, rollout, or rollback risks.
-- Validation commands that are absent, too broad, or too weak.
-
-If meaningful gaps exist, revise the plan or ask targeted questions. Do not proceed to simplicity review until blocker and major findings are resolved, explicitly accepted as risk, or converted into tracked follow-up work.
-
-## Simplicity Plan Review
-
-After adversarial findings have been reconciled and the plan has been revised, invoke `simplicity-review` through the same configured `plan_review.workers` selector in a new fresh session when supported. The selector may match or differ from `ship_it.workers`, but both review stages use the same review entry by default.
-
-Pass only:
-
-- The `simplicity-review` skill.
-- The original work brief and acceptance criteria.
-- The revised plan artifact or Markdown plan.
-- The complete adversarial-review output and the disposition of each meaningful finding.
-- Relevant repository instructions, conventions, source documents, and code references.
-- A short instruction to find unnecessary complexity while preserving every required outcome and accepted risk control.
-- The active harness, task-workspace path, and existing `kickoff.yaml` path when available.
-
-Do not pass expected simplifications or the calling agent's preferred architecture. The reviewer should independently trace proposed complexity to requirements, repository policy, demonstrated risk, or accepted adversarial concerns.
-
-Read the simplicity review output and reconcile every `Simplify`, `Remove/Defer`, and `Conflict` finding. In full planning, feed accepted `Plan Feedback For Revision` back into `plan-it`. In fast planning, revise the Markdown plan directly. Record protected complexity and the rationale for rejected suggestions in the work brief.
-
-The simplicity reviewer may replace an adversarial review's proposed remedy with a simpler one only when it preserves the same required safeguard. It must not silently remove the underlying concern.
-
-If a material `Conflict` remains, ask only for the owner decision needed to resolve it. If a fresh session is unavailable, run `simplicity-review` in the current session and state that the review was not independent.
-
-Re-run simplicity review only when revisions materially change architecture, scope, or risk controls. Avoid review loops over wording or optional polish.
-
-## Plan Approval And Continuation
-
-After both reviews are complete, continue according to the selected planning mode.
-
-For full planning, ask the user to approve or revise the reviewed plan. This is the normal approval point before implementation.
-
-If the user approves, immediately invoke `ship-it` and keep the workflow moving through implementation, local review, PR creation, and PR monitoring.
-
-If the user requests revisions, update the brief and send the feedback through `plan-it` before asking for plan approval again.
-
-For fast planning, do not ask the user to approve the internal Markdown plan. Record that both reviews passed, report that implementation is starting, and immediately invoke `ship-it`.
-
-If the user asks to continue investigating, keep the workflow in investigation mode and update the brief with findings.
-
-If the user asks to defer, stop and record the current state in the brief.
-
-Do not add extra approval gates after full-path approval or fast-path internal review. Ask again only when required by a real blocker, destructive action, credential/auth issue, product decision, first-use review or implementation worker configuration selected by the user, or explicit user instruction.
-
-## Execution Handoff
-
-When the full-path plan is approved or the fast-path plan passes both reviews, invoke `ship-it` and provide:
-
-- Accepted Lavish plan path or reviewed Markdown plan path.
-- Work brief path.
-- Adversarial and simplicity review decisions.
-- Review-worker selector and configuration source when one was resolved.
-- Worktree manager, branch, and worktree path.
-- Implementation delegation and its source.
-- Repository `kickoff.yaml` path when one exists.
-- Planning mode.
-- Target branch or base branch if known.
-- Validation expectations.
-- Known risks and open questions.
-
-Let `ship-it` run the implementation loop to completion, including branch prep, Red/Green TDD, commits, validation, `code-review`, `create-pr`, pull request creation, a 5-minute review monitor, code review bot checks, CI checks, and review feedback fixes.
-
-Kickoff is not complete when the PR is opened. It is complete only when `ship-it` reports that the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
-
-## Output Back To The User
-
-At each phase transition, report:
-
-- Current phase.
-- Work brief path.
-- Planning mode and why it was selected.
-- Implementation delegation and whether it came from the task, repository, or fallback default.
-- Plan path when created, identifying it as Lavish or internal Markdown.
-- Open decisions that need the user.
-- Next skill being invoked and why.
+At each phase transition, report the current phase, brief path, planning mode and reason, implementation delegation/source, resolved worker selectors/source, plan path and artifact type, open decisions, and the next skill being invoked.
