@@ -41,6 +41,8 @@ as a successful operation.
   they do not use the owner password.
 - A shared token is scoped to exactly one shared space, its permissions, and its
   lease expiry. It cannot be broadened or extended by the collaborator.
+- A read-only URL token is a separate query-token capability for browser and
+  API reads. It never grants owner authentication or write access.
 - Never log or commit passwords, session cookies, invite URLs, access tokens, or
   agent tokens. Persist credentials only in an approved secret store, never in
   Markdown, source files, ordinary workspace files, or chat.
@@ -72,6 +74,7 @@ Read surfaces:
 - `GET /api/vault/notes/by-path?path=`
 - `GET /api/vault/notes/neighborhood?path=`
 - `GET /api/vault/search?q=&path=&tag=&limit=&offset=`
+- `GET /api/vault/assets?path=` for in-scope local images and files
 
 ## Note writes
 
@@ -130,7 +133,7 @@ or is revoked.
 - Private linked notes are filtered from search, backlinks, neighborhoods, and
   graph results.
 - Lease duration defaults to 7 days, has a minimum of 1 day, and has a maximum
-  of 30 days.
+  of 183 days.
 - Access expires synchronously using server time; cleanup may happen
   asynchronously.
 - Invite URLs are opaque, one-time capabilities valid for one hour. They are
@@ -169,7 +172,7 @@ Call `POST ${NABU_URL}/api/shared-spaces/`:
 ```
 
 `confirmed: true` is mandatory. Never infer confirmation from a proposal
-request or the original user wording. `durationDays` must be between 1 and 30;
+request or the original user wording. `durationDays` must be between 1 and 183;
 omitting it uses the 7-day default where supported. The proposal must be
 unexpired and owned by the authenticated owner. The response includes a
 one-time `inviteUrl`, `inviteExpiresAt`, and `sharedSpaceExpiresAt`. Do not log
@@ -249,6 +252,43 @@ redemption status unknown, do not assume a retry is safe; ask the owner to
 generate another invite. Each additional collaborator needs a new one-time
 invite.
 
+### Read-only URL tokens
+
+Owners can issue a browser/API read capability for an existing shared space:
+
+```bash
+curl -fsS -X POST \
+  "${NABU_URL}/api/shared-spaces/${SHARED_SPACE_ID}/read-link" \
+  -H "Cookie: nabu_session=${SESSION_COOKIE}" \
+  -H 'Content-Type: application/json' \
+  --data '{"durationDays":14}'
+```
+
+- `durationDays` is optional; it defaults to 7 and must be between 1 and 183.
+  The effective expiry cannot outlive the shared-space lease.
+- The response includes `shareUrl`, `sharedSpaceId`, `rootPath`,
+  `permission: "read"`, `durationDays`, and `expiresAt`.
+- There is one active read link per shared space. Issuing a new one immediately
+  invalidates the old token. `DELETE /api/shared-spaces/:sharedSpaceId/read-link`
+  revokes the current read link without revoking the shared space and is
+  idempotent.
+- Treat `shareUrl` as a secret capability. Never print it, commit it, or save
+  it in an ordinary workspace file.
+- Humans can open `${NABU_URL}/?path=projects%2Fcanner&token=<opaque-token>`.
+  The UI is read-only, preserves the token while navigating within the subtree,
+  and returns a generic unavailable message outside the subtree.
+- Agents can use the same token on read APIs:
+
+```bash
+curl -fsS "${NABU_URL}/api/vault/tree?token=<opaque-token>"
+curl -fsS "${NABU_URL}/api/vault/notes/by-path?path=projects%2Fcanner%2Freadme.md&token=<opaque-token>"
+curl -fsS "${NABU_URL}/api/vault/assets?path=projects%2Fcanner%2Fdiagram.png&token=<opaque-token>"
+```
+
+Do not use a read-link token on write endpoints. Private linked notes and
+metadata are redacted from public projections; outside paths and assets return
+`{"error":"Shared space unavailable"}` without repeating the private path.
+
 ### Shared-space management
 
 - `GET /api/shared-spaces/` lists spaces owned by the authenticated owner.
@@ -258,7 +298,7 @@ invite.
 - `POST /api/shared-spaces/:sharedSpaceId/invites` creates another one-time
   invite for an active owned space.
 - `POST /api/shared-spaces/:sharedSpaceId/extend` requires explicit
-  confirmation and may not exceed the 30-day maximum.
+  confirmation and may not exceed the 183-day maximum.
 
 Extension body:
 
@@ -284,6 +324,8 @@ tokens, extend leases, or revoke spaces.
   or unavailable.
 - `428 WRITE_REVISION_REQUIRED`: re-read and retry with `If-Match` or
   `expectedRevision`.
+- Public read-link requests outside their shared subtree return the stable
+  `Shared space unavailable` error and do not repeat the private path.
 
 When present, use structured `code`, `nextAction`, `readUrl`, and
 `currentRevision` fields to decide the next request. Do not expose or repeat
@@ -319,6 +361,8 @@ responses.
 
 - Sharing: preview -> show complete scope -> obtain explicit confirmation ->
   confirm -> distribute one-time invite.
+- Read links: issue as the owner -> store the share URL only as a secret ->
+  verify one in-scope read -> distribute it -> rotate or revoke when needed.
 - Redemption: derive `NABU_URL` from the invite URL -> POST the exact
   `inviteUrl` payload to `${NABU_URL}/api/shared-spaces/invites/redeem` once ->
   persist the token and metadata securely -> GET the shared-space tree and
