@@ -1,4 +1,4 @@
 interface:
   display_name: "Nabu"
-  short_description: "Work with Nabu notes over its HTTP API"
-  default_prompt: "Use $nabu to read, write, and verify Nabu notes over HTTP."
+  short_description: "Use Nabu through MCP-first remote access"
+  default_prompt: "Use $nabu to work through native remote MCP first, manage scoped Nabu spaces, and fall back to HTTP only when needed."
