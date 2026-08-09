@@ -157,8 +157,13 @@ or is revoked.
 
 ### Shared-space contract versions
 
-The current joining contract is version 2. Feature-detect it from each server
-response. Version 2 adds bound consent, retry-safe redemption, and a portable
+The current joining contract is version 2. Feature-detect proposal and
+confirmation behavior from their responses. For redemption, send an
+idempotency key on the first request to every server. If that request has an
+unknown network outcome, make at most one recovery request with the exact same
+invite and key. A v2 server returns the same token; a v1 server either completes
+the still-pending redemption or returns `410` when the first request consumed
+the invite. Version 2 adds bound consent, retry-safe redemption, and a portable
 profile; older deployments remain usable through the version-1 fallback.
 
 - For v2, propose with exactly the bound shape below. The server stores the
@@ -222,8 +227,10 @@ unexpired and owned by the authenticated owner. The response includes a
 one-time `inviteUrl`, `inviteExpiresAt`, and `sharedSpaceExpiresAt`. A v2
 confirmation also describes the exact redemption method, relative endpoint,
 `inviteUrl` body field, required `Idempotency-Key`, expiry, and
-`nextAction: "redeem_and_save_profile"`. Resolve its relative endpoint under
-the canonical base; never use an untrusted host or request origin. Do not log
+`nextAction: "redeem_and_save_profile"`. Require the fixed
+`/api/shared-spaces/invites/redeem` suffix, remove its leading slash, and append
+it beneath the canonical base pathname. Do not resolve it as an origin-root URL
+that can drop a base-path prefix; never use an untrusted host or request origin. Do not log
 or persist the invite URL; send it only to the intended collaborator.
 
 ### 3. Redeem an invite and recover safely
@@ -285,13 +292,19 @@ URLs: append them to the exact canonical `NABU_URL` so a prefix such as
 one against the bare origin (which would drop the prefix), and never put a
 token or `Authorization` value in a link.
 
-For a v2 redemption, generate one cryptographically random
+For every initial redemption, generate one cryptographically random
 `Idempotency-Key` with at least 128 bits of entropy (for example, 16 random
 bytes encoded with URL-safe characters). Validate its length/character set,
 keep it only in process memory, and reuse that exact key for the entire
 redemption attempt: the initial POST, any retry after an unknown network
 outcome, profile persistence, and immediate verification. Do not generate a
-replacement key between those steps, and never print or save the key.
+replacement key between those steps, and never print or save the key. A
+For an unknown first outcome, make at most one recovery request with that same
+invite and key even though the server version is not yet known. A successful
+response without `contractVersion: 2` is v1 and must not be retried again;
+older servers safely ignore the extra request header. A `410` from the recovery
+request can mean a v1 server consumed the invite but lost the response, so the
+token is unrecoverable and the owner must create a new invite.
 
 Before reporting success:
 
@@ -331,13 +344,14 @@ store before requesting another invite.
 
 `410 SHARED_SPACE_INVITE_INVALID` means the invite is malformed, expired,
 already redeemed, or its space is expired/revoked. Do not retry alternate field
-names. If a v2 network failure leaves redemption status unknown, retry the
-exact same invite URL with the exact same in-memory `Idempotency-Key`; the same
-invite/key pair returns the identical token and metadata. A different key
-remains rejected. If either the invite or key is lost, ask the owner for a new
-invite. Headerless v1 redemption remains one-shot and must not be retried as if
-it were v2. Each additional collaborator needs a newly generated one-time
-invite.
+names. If a network failure leaves the first redemption status unknown, make at
+most one recovery request with the exact same invite URL and in-memory
+`Idempotency-Key`. Version 2 returns the identical token and metadata. On a
+version-1 server, success means the retry performed the redemption; `410` means
+the original response and token were lost, so ask the owner for a new invite.
+A different key remains rejected. If either the invite or key is lost, ask the
+owner for a new invite. Headerless v1 redemption remains one-shot. Each
+additional collaborator needs a newly generated one-time invite.
 
 ### 4. Persist one scoped credential profile
 
@@ -370,7 +384,8 @@ timestamp.
 Choose the profile root in this exact order:
 
 1. If `NABU_CREDENTIALS_DIR` is set, use that directory as the explicit
-   override and do not silently fall back to another runtime directory.
+   override, create the same `<deployment-id>/<shared-space-id>.env` structure
+   beneath it, and do not silently fall back to another runtime directory.
 2. Otherwise use the structured directory belonging to the current runtime:
    Codex uses `~/.codex/secrets/nabu/<deployment-id>/<shared-space-id>.env`,
    while Hermes uses
@@ -378,13 +393,13 @@ Choose the profile root in this exact order:
    silently cross between runtime directories. If the runtime cannot be
    identified, inspect Codex then Hermes in that order and stop on ambiguity.
 
-`<deployment-id>` is a deterministic, filename-safe encoding of the *full*
-canonical API base (including scheme, non-default port, and path prefix), not
-the host alone. A stable URL-safe SHA-256 encoding of the canonical UTF-8 base
-is suitable. The profile filename is derived only from the validated server
-`sharedSpaceId` (with `profileId` retained as non-secret metadata), never from
-an untrusted host or path. Separate deployments and shared spaces must never
-overwrite one another.
+`<deployment-id>` is exactly `sha256-` followed by the 64-character lowercase
+hex SHA-256 digest of the canonical API base's UTF-8 bytes (including scheme,
+non-default port, and path prefix), not the host alone. The profile filename is
+exactly the validated server `sharedSpaceId` plus `.env`; `profileId` is a
+response hint and is not persisted as an eighth profile key. Never derive a
+filename from an untrusted host or path. Separate deployments and shared spaces
+must never overwrite one another.
 
 On POSIX, create profile directories with mode `0700` and files with mode
 `0600`; verify the current-user owner and exact permissions before reading.
@@ -407,11 +422,13 @@ more than one canonical base is present, ask the user which deployment to use;
 never guess. Reject malformed, symlinked/reparse-point, wrong-owner,
 over-permissive, or locally expired profiles before using their token.
 
-For a requested vault-relative path, normalize `/` segments and keep only
-candidate roots that contain it at a segment boundary (`projects/example`
-contains `projects/example/note.md`, but not `projects/example-private`). Select
-the greatest segment depth. Equal-depth candidates are ambiguous and must stop
-discovery rather than silently choosing; an out-of-scope path is an error.
+For a requested vault-relative path and operation, normalize `/` segments,
+discard profiles without the required permission (`read` for reads;
+`read,write` for writes), and keep only candidate roots that contain the path
+at a segment boundary (`projects/example` contains
+`projects/example/note.md`, but not `projects/example-private`). Then select the
+greatest segment depth. Equal-depth eligible candidates are ambiguous and must
+stop discovery rather than silently choosing; an out-of-scope path is an error.
 
 Read the legacy Hermes flat file `~/.hermes/secrets/nabu.env` only when no
 structured profile exists for the selected deployment. Validate it with the same
@@ -539,13 +556,13 @@ responses.
 - Read links: issue as the owner -> store the share URL only as a secret ->
   verify one in-scope read -> distribute it -> rotate or revoke when needed.
 - Redemption: parse the invite URL and derive its exact canonical base (including
-  any prefix) -> feature-detect v2 -> for v2 generate one in-memory
-  128-bit-plus `Idempotency-Key` and reuse it through POST, atomic profile save,
-  and verification -> POST the exact `inviteUrl` payload to
+  any prefix) -> generate one in-memory 128-bit-plus `Idempotency-Key` for the
+  initial request on every server -> POST the exact `inviteUrl` payload to
   `${NABU_URL}/api/shared-spaces/invites/redeem` -> persist the token and
   metadata securely -> GET the shared-space tree and requested documents ->
-  use bearer auth -> never log a secret. Retry an unknown v2 outcome only with
-  the same invite and key; headerless v1 remains one-shot.
+  use bearer auth -> never log a secret. After an unknown first outcome, make
+  at most one recovery request with the same invite and key. Version 2 recovers
+  the token; a version-1 `410` requires a new invite.
 - Writes: read -> edit/merge -> send revision precondition -> on `409`/`428`
   re-read and retry safely -> verify by canonical path.
 - Private data: authorize before reading or mutating every endpoint and filter
