@@ -51,6 +51,32 @@ Persist the resulting session only in a secure cookie jar. Do not include the
 password, cookie, or bearer value in this skill, a workspace file, logs, or
 chat. Require owner authorization for every shared-space management endpoint.
 
+### Owner-agent connection link
+
+For non-technical owner onboarding, the human owner uses `Settings → Agents →
+Connect an agent`, chooses `read` or `read/write`, and generates a one-time
+connection URL. The agent must redeem the exact full URL; it must not fetch the
+URL with `GET`:
+
+```text
+POST ${NABU_URL}/api/agent/connections/redeem
+Content-Type: application/json
+
+{ "connectionUrl": "${OWNER_CONNECTION_URL}" }
+```
+
+The URL expires after 10 minutes and can be redeemed once. A malformed,
+expired, or already-used URL returns `410 AGENT_CONNECTION_INVALID`. A
+successful response contains `credential`, `permissions`, `apiBaseUrl`,
+`createdAt`, `expiresAt`, and `nextAction: "configure_agent"`; the durable
+credential expires 90 days after issuance. Store it as `NABU_AGENT_TOKEN` (or
+send it as `Authorization: Bearer ${OWNER_AGENT_CREDENTIAL}`) in the approved
+secret store, never in a URL, chat, logs, or ordinary files. An owner-agent
+credential is full-vault scoped with the selected write permission; it cannot
+manage shared spaces. When it expires and returns `401`, have the owner issue a
+new connection URL. Preserve any deployment path prefix when joining the
+endpoint.
+
 ## Vault read and write surfaces
 
 Treat `relPath` as the canonical note identity. Use these read endpoints with

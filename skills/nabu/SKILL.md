@@ -1,6 +1,6 @@
 ---
 name: nabu
-description: Work with self-hosted Nabu knowledge spaces through native remote MCP first, including bearer authentication, shared-space invites, scoped credentials, note traversal, and revision-aware mutations. Use when an agent must discover, authenticate, read, write, share, redeem, or verify Nabu data, or use the HTTP API because MCP is unavailable or explicitly requested.
+description: Work with self-hosted Nabu knowledge spaces through native remote MCP first, including owner-agent connection links, bearer authentication, shared-space invites, scoped credentials, note traversal, and revision-aware mutations. Use when an agent must discover, authenticate, read, write, share, redeem, or verify Nabu data, or use the HTTP API because MCP is unavailable or explicitly requested.
 ---
 
 # Nabu agent contract
@@ -43,8 +43,17 @@ native remote endpoint silently.
   it is not configured, ask for the deployment base URL and have the owner put
   the credential into the host's approved secret or environment mechanism.
   Never collect or store the password in chat, Markdown, or ordinary files.
-  Verify the connection with `get_vault_summary` before managing notes or
-  shared spaces.
+  For non-technical onboarding, the human owner can use `Settings → Agents →
+  Connect an agent`, choose `read` or `read/write`, and generate a one-time
+  connection URL. Redeem the full URL exactly once with
+  `POST /api/agent/connections/redeem`; do not GET, log, or echo it. The
+  response contains a durable owner-agent bearer and `expiresAt` (90 days
+  after issuance). Store the bearer in the approved secret store as
+  `NABU_AGENT_TOKEN` and use it for remote MCP or HTTP. It is full-vault scoped
+  with the selected write permission, but cannot administer shared spaces. If
+  the durable bearer expires or returns `401`, ask the owner to generate a new
+  connection URL. Verify the connection with `get_vault_summary` before
+  managing notes or shared spaces.
 - **Collaborator:** Accept one invite URL; no Nabu account, password, or
   separate deployment is required. Parse the URL with a URL parser, preserve
   any deployment base path, and connect anonymously to that deployment's
