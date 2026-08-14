@@ -54,7 +54,7 @@ When a direct `ship-it` invocation contains an explicit lasting instruction, per
 Apply the modes as follows:
 
 - `never`: spawn no implementation workers. Execute in the current orchestrator.
-- `auto`: lean toward workers when at least one bounded task can run independently without creating file or dependency conflicts. Record the decision and rationale.
+- `auto`: lean toward workers when at least one bounded task can run independently without creating file or dependency conflicts. Actively look for multiple dependency-ready lanes before settling on a single packet. Record the decision and rationale.
 - `always`: delegate at least one bounded implementation task. Do not silently fall back to orchestrator-only execution when workers are unavailable.
 
 Accept legacy `solo` as `never` and `subagents` as `always`, but write only current values.
@@ -74,6 +74,7 @@ For orchestrator-only execution:
 For delegated execution:
 
 - Follow the worker discovery, configuration, manifest, dispatch, and integration contract in `references/delegation.md`.
+- Prefer multiple workers when the accepted plan contains genuinely independent, non-overlapping workstreams that can be reconciled through explicit contracts. Use dependency-aware waves when later packets depend on shared foundations.
 - Create bounded work packets with explicit dependencies, file ownership, acceptance criteria, and validation.
 - Dispatch only dependency-ready tasks. Run independent tasks in parallel and coupled tasks in sequential waves.
 - Keep shared schemas, migrations, central configuration, architectural changes, and final integration with the orchestrator unless ownership is unambiguous.

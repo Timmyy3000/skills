@@ -7,7 +7,7 @@ description: Start an IC engineering workflow from initial intent through planni
 
 Guide an engineer from an initial idea to a durable brief, proportionate plan, implementation, pull request, and monitored review loop.
 
-Keep this skill thin. Own intake, repository context, worker-preference gating, planning-mode selection, routing, and any required plan approval. Delegate worker discovery and dispatch details to `adversarial-review`, `simplicity-review`, and `ship-it`; delegate plan creation, code review, and pull-request mechanics to `plan-it`, `code-review`, and `create-pr`.
+Keep this skill thin. Own intake, repository context, worker-preference gating, planning-mode selection, routing, handoff validation, and any required plan approval. Delegate planning-worker discovery and plan creation to `plan-it`; delegate review and implementation worker details to `adversarial-review`, `simplicity-review`, and `ship-it`; delegate code review and pull-request mechanics to `code-review` and `create-pr`.
 
 ## Rules
 
@@ -17,6 +17,7 @@ Keep this skill thin. Own intake, repository context, worker-preference gating, 
 - Create durable context before planning, implementation, or investigation.
 - Ask only for information that materially changes scope, risk, priority, or execution.
 - Prefer repository evidence over assumptions: read local instructions, templates, docs, tickets, specs, and nearby code when relevant.
+- Keep the current task as the top-level orchestrator. Dispatch planning, independent reviews, implementation packets, and code review to their owning skills and configured workers; do not absorb specialist work back into the orchestrator.
 - Default implementation delegation to `always`: use subagents unless the user explicitly chooses `never`/no subagents for the task. Resolve `auto` only when the user or repository default selects it.
 - Keep implementation delegation separate from independent plan reviews. Choosing no implementation worker must not silently disable review quality or change the review skills' worker contract.
 - Make missing worker configuration a first-use gate; do not silently use the current orchestrator, an arbitrary model, or a fallback worker.
@@ -97,24 +98,25 @@ Prefer an existing per-task convention. Otherwise use the directory selected for
 
 ## Required Worker Configuration Gate
 
-Run this gate before selecting the planning mode or invoking a review or implementation skill.
+Run this gate after enough intake and evidence gathering to determine whether the route requires a plan, but before invoking planning, review, or implementation skills. A small read-only investigation that needs only a brief and final findings does not require a planning selector or plan-review selectors.
 
 1. Determine the active harness and whether it can spawn workers. Locate the repository's existing `kickoff.yaml` using the folder convention; do not create a new agent folder solely for configuration.
-2. Resolve implementation delegation in this order: explicit task choice, saved `implementation_delegation_default`, then the workflow fallback `always`. Accept `subagents` as `always` and `solo` as `never`, but record only `always`, `auto`, or `never`.
-3. If the user explicitly says no subagents for this task, resolve implementation delegation to `never` and do not ask for an implementation worker. A lasting instruction such as "never use subagents" may be saved as the repository default; a task-specific choice must not change it.
-4. Unless the user separately declines worker-based reviews, require first-use review configuration when `plan_review.workers.<harness>` is missing. When implementation delegation resolves to `always`, also require `ship_it.workers.<harness>` before proceeding. Present the default clearly: "Use subagents: yes (default; say no to opt out)." Ask which review worker/model and, when implementation delegation is `always`, which implementation worker/model to use, or whether the exact same selector should be reused for both. In `auto`, let `ship-it` decide whether a worker is worthwhile and require its bootstrap only if it selects delegation.
-5. Before asking, let the owning skill discover available native workers. Use `adversarial-review` for review-worker bootstrap and `ship-it`'s `references/delegation.md` for implementation-worker bootstrap. Those skills own selector shapes, model/reasoning validation, native worker creation, persistence, and revalidation; do not duplicate their detailed dispatch contracts here.
+2. When the selected route will execute changes through `ship-it`, resolve implementation delegation in this order: explicit task choice, saved `implementation_delegation_default`, then the workflow fallback `always`. Accept `subagents` as `always` and `solo` as `never`, but record only `always`, `auto`, or `never`. For brief-only investigations or other routes that will not invoke `ship-it`, record implementation delegation as `not applicable` and skip implementation-worker configuration.
+3. On an execution route, if the user explicitly says no subagents for this task, resolve implementation delegation to `never` and do not ask for an implementation worker. A lasting instruction such as "never use subagents" may be saved as the repository default; a task-specific choice must not change it.
+4. When the selected route creates a plan, require first-use planning configuration if `plan_it.workers.<harness>` is missing. When that plan will receive independent reviews and the user has not declined them, also require `plan_review.workers.<harness>`. When the route will invoke `ship-it` and implementation delegation resolves to `always`, require `ship_it.workers.<harness>` before proceeding. Present the default clearly: "Use subagents: yes (default; say no to opt out)." Ask only for the planning, review, and implementation selectors required by the selected route, or which stages should intentionally reuse the exact same selector. In `auto`, let `ship-it` decide whether implementation workers are worthwhile and require its bootstrap only if it selects delegation.
+5. Before asking, let each owning skill discover available native workers. Use `plan-it`'s `references/delegation.md` for planning-worker bootstrap, `adversarial-review` for review-worker bootstrap, and `ship-it`'s `references/delegation.md` for implementation-worker bootstrap. Those skills own selector shapes, model/reasoning validation, native worker creation, persistence, and revalidation; do not duplicate their detailed dispatch contracts here.
 6. If a valid selector already exists, confirm or reuse it rather than asking for its model again. If a harness dispatches directly by model, collect only the supported model and optional reasoning setting. Never persist the current orchestrator as a worker.
-7. If workers are required by the resolved `always` mode but the active harness cannot spawn them, stop and ask the user to choose a supported harness or explicitly opt out. Do not silently fall back to orchestrator-only implementation. Review skills may use their documented current-session fallback only when that fallback is explicitly accepted and recorded as non-independent.
-8. Record the resolved delegation, review selector, implementation selector, and source of each in the brief. Pass them to the owning skills; they must preserve unrelated configuration and inactive harnesses.
+7. If the active harness cannot spawn the required planning worker, stop and ask the user to choose a supported harness or explicitly accept orchestrator planning for this task. If implementation workers are required by `always` but unavailable, stop and ask the user to choose a supported harness or explicitly opt out. Do not silently fall back. Review skills may use their documented current-session fallback only when that fallback is explicitly accepted and recorded as non-independent.
+8. Record the planning, review, and implementation selectors and the source of each in the brief. Pass them to the owning skills; they must preserve unrelated configuration and inactive harnesses.
 
-The first-use prompt is mandatory when configuration is absent; lack of an explicit "yes" is not permission to skip it. An explicit no suppresses only the worker configuration it actually declines. Keep independent plan reviews enabled unless the user separately and explicitly declines worker-based reviews.
+The first-use prompt is mandatory when configuration required by the selected route is absent; lack of an explicit "yes" is not permission to skip it. An explicit no suppresses only the worker configuration it actually declines. Keep independent plan reviews enabled unless the user separately and explicitly declines worker-based reviews.
 
 ### Single Repository Configuration
 
 Use one repository-level `kickoff.yaml`, under the discovered agent-workspace root, for this workflow. It may contain:
 
 - `implementation_delegation_default`: an explicit lasting default.
+- `plan_it.workers`: owned by `plan-it`.
 - `plan_review.workers`: owned by `adversarial-review` and `simplicity-review`.
 - `ship_it.workers`: owned by `ship-it`.
 
@@ -130,7 +132,7 @@ Ask once for the smallest useful set of answers:
 - Objective and why it matters.
 - Timeline or production target, if any.
 - Constraints, owners, dependencies, affected repositories, and existing evidence.
-- Implementation delegation choice (`always` default, `auto`, or explicit `never`).
+- Implementation delegation choice (`always` default, `auto`, or explicit `never`) when the route will execute changes.
 - Planning mode (`auto`, `full`, or `fast`).
 - Worktree manager, branch/worktree name, and base ref.
 - The required worker configuration gate above when active selectors are missing.
@@ -163,6 +165,8 @@ Use this structure:
 - Type:
 - Implementation delegation:
 - Delegation source:
+- Planning worker:
+- Planning worker source:
 - Review worker:
 - Review worker source:
 - Implementation worker:
@@ -209,9 +213,9 @@ Choose the mode after inspecting enough repository evidence:
 
 Honor an explicit `fast` request but state the risk and keep the plan/reviews proportional. Never use fast-path handling to bypass approval for destructive actions, credentials, external side effects, unresolved product decisions, or other actions requiring authority. Upgrade `auto` to `full` when later evidence increases scope or risk.
 
-For full planning, invoke `plan-it` with the brief, task workspace, work type, worker/delegation decisions, source evidence, timeline, constraints, and open decision points. Let `plan-it` own the Lavish artifact and its detailed content standard.
+For both modes, invoke `plan-it` through the configured `plan_it.workers` selector with the brief, task workspace, work type, worker/delegation decisions, source evidence, timeline, constraints, and open decision points. Let `plan-it` own worker dispatch, repository exploration, the plan artifact, and its detailed content standard. Full mode produces a Lavish artifact; fast mode produces a concise Markdown plan.
 
-For fast planning, put the internal plan in the brief or the repository's established sibling plan location. Include objective/scope, the simplest viable approach, affected files/systems, acceptance criteria, focused validation, material risks, rollback, and unresolved decisions. Add type-appropriate evidence, regression, measurement, preservation, timebox, or follow-up criteria.
+Validate the returned planning result before review: the artifact must exist inside the intended worktree, cover the brief and acceptance criteria, identify evidence and assumptions, and contain no implementation changes. Do not silently complete or rewrite substantive plan content in the orchestrator.
 
 Do not force full planning for a small read-only investigation; a concise brief and final findings may be sufficient.
 
@@ -219,26 +223,26 @@ Do not force full planning for a small read-only investigation; a concise brief 
 
 After the plan exists, invoke `adversarial-review` through its configured review worker in a fresh session when the harness supports workers. Pass only the skill, brief, plan, relevant evidence, active harness, task workspace, and `kickoff.yaml` path. The review skill owns worker bootstrap and structured output.
 
-Read the result, record each meaningful finding's disposition in the brief, and resolve every `Blocker` and `Major` before continuing. In full mode, feed accepted revision feedback back to `plan-it`; in fast mode, revise the Markdown plan directly. If no fresh worker is available, use the review skill's explicit current-session fallback and state that independence was unavailable.
+Read the result, record each meaningful finding's disposition in the brief, and resolve every `Blocker` and `Major` before continuing. Feed accepted revision feedback back through the configured planning worker for both full and fast plans. Resume the original planning session when supported; otherwise dispatch a fresh planning worker with the original brief, current plan, complete findings, and dispositions. If no fresh review worker is available, use the review skill's explicit current-session fallback and state that independence was unavailable.
 
 After adversarial findings are reconciled and the plan is revised, invoke `simplicity-review` through the same configured `plan_review.workers` entry in a new fresh session when supported. Pass the original brief, revised plan, complete adversarial output and dispositions, relevant evidence, active harness, task workspace, and config path. Reconcile every simplification, removal/deferment, and conflict; protect accepted safeguards and record rejected simplifications with rationale.
 
-If a material conflict remains, ask only for the owner decision needed to resolve it. If the user asks to defer or continue investigating, record the current phase and findings in the brief instead of starting implementation.
+Route every accepted simplicity finding and its disposition back through the configured planning worker, then validate the revised artifact using the same planning-result contract. If the revision materially changes architecture, scope, or risk controls, repeat adversarial and simplicity review; do not create review loops for wording or optional polish.
 
-Re-run simplicity review only when revisions materially change architecture, scope, or risk controls. Do not create review loops for wording or optional polish.
+If a material conflict remains, ask only for the owner decision needed to resolve it. If the user asks to defer or continue investigating, record the current phase and findings in the brief instead of starting implementation.
 
 ## Approval And Execution Handoff
 
-For full mode, ask the user to approve or revise the reviewed plan. If revisions are requested, apply them through `plan-it` and repeat the required review/approval path. For fast mode, do not ask for plan approval; start execution after both reviews pass.
+For full mode, ask the user to approve or revise the reviewed plan. If revisions are requested, route them through the configured planning worker and repeat the required review/approval path. After approval, send the acceptance event back through `plan-it` so the planning worker can end the Lavish session and export the read-only accepted archive. Validate the archive and use it as the accepted plan for execution. For fast mode, do not ask for plan approval; start execution after both reviews pass.
 
 When execution is authorized, invoke `ship-it` with:
 
-- The accepted Lavish plan or reviewed Markdown plan.
+- The accepted read-only Lavish archive or reviewed Markdown plan.
 - The brief and task-workspace path.
 - Adversarial/simplicity findings and dispositions.
 - Worktree manager, branch, worktree path, and target branch.
 - Resolved implementation delegation and source.
-- Review and implementation selectors plus their configuration source.
+- Planning, review, and implementation selectors plus their configuration source.
 - The `kickoff.yaml` path, validation expectations, risks, and open questions.
 
 Let `ship-it` own bounded implementation delegation, integration, validation, `code-review`, `create-pr`, PR creation, and the five-minute review monitor. Do not add approval gates after full-path approval or fast-path review except for a real blocker, destructive action, credential/auth issue, required product decision, first-use worker configuration, or explicit user pause.
@@ -247,4 +251,4 @@ Kickoff is complete only when `ship-it` reports the PR ready to merge, merged, e
 
 ## Phase Updates
 
-At each phase transition, report the current phase, brief path, planning mode and reason, implementation delegation/source, resolved worker selectors/source, plan path and artifact type, open decisions, and the next skill being invoked.
+At each phase transition, report the current phase, brief path, planning mode and reason, implementation delegation/source, planning/review/implementation selectors and sources, plan path and artifact type, open decisions, and the next skill being invoked.

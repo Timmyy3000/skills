@@ -17,6 +17,10 @@ Use the repository's existing agent-workspace convention and its single `kickoff
 
 ```yaml
 version: 1
+plan_it:
+  workers:
+    <harness>:
+      agent: "<planning-worker-name>"
 plan_review:
   workers:
     <harness>:
@@ -32,16 +36,16 @@ Each harness entry must use exactly one selector:
 - `agent`: an exact harness-native named worker. Its native definition is the source of truth for model, reasoning, instructions, and other settings.
 - `model`: a direct per-spawn model selector, with optional `reasoning_effort`, only when the harness does not require named workers.
 
-To share a worker with implementation, use the exact same selector in `plan_review.workers` and `ship_it.workers`. To use a separate review worker, configure different selectors. Never combine `agent` and `model`, duplicate a named worker's settings in `kickoff.yaml`, or persist the current orchestrator.
+To share a worker with planning or implementation, use the exact same selector in the intended stage entries. To use a separate review worker, configure different selectors. Never combine `agent` and `model`, duplicate a named worker's settings in `kickoff.yaml`, or persist the current orchestrator.
 
 Resolve the active harness and worker before dispatching:
 
 1. Honor an explicit worker choice supplied for this task.
 2. Read and validate `plan_review.workers.<harness>` when it exists.
-3. When no review selector exists but `ship_it.workers.<harness>` does, discover the existing selector and ask whether to reuse it or configure a separate review worker. If the user chooses reuse, copy only that exact selector into `plan_review.workers.<harness>`.
+3. When no review selector exists but `plan_it.workers.<harness>` or `ship_it.workers.<harness>` does, discover the existing selectors and ask whether to reuse one or configure a separate review worker. If the user chooses reuse, copy only that exact selector into `plan_review.workers.<harness>`.
 4. If named workers are supported but none is selected, discover available native workers before asking the user to select or confirm one. If none is suitable, ask for the name, model, supported reasoning level, and personal or project scope, explain the native definition that must be created, create the smallest valid definition, and validate it.
 5. If the harness dispatches directly by model, ask for the model and supported reasoning level, validate them, and store only `model` plus optional `reasoning_effort`.
-6. Update only the active harness entry in the existing `kickoff.yaml`, preserving all other keys, including `ship_it` and other harnesses.
+6. Update only the active harness entry in the existing `kickoff.yaml`, preserving all other keys, including `plan_it`, `ship_it`, and other harnesses.
 
 Do not create `.agent/` or `.agents/` solely for worker configuration when the repository has no such convention. Do not configure inactive harnesses. Do not ask for model or reasoning settings when the user selects an existing named worker.
 

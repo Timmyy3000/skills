@@ -7,6 +7,7 @@ Use this reference only when `ship-it` resolves implementation delegation to `al
 Use one repo-level `kickoff.yaml` for this workflow:
 
 - `implementation_delegation_default` optionally stores the user's lasting preference: `never`, `auto`, or `always`.
+- `plan_it.workers` stores one harness-native planning selector per harness and is owned by `plan-it`.
 - `plan_review.workers` optionally stores one harness-native review selector per harness. It is owned by `adversarial-review` and `simplicity-review` and is shared by both.
 - `ship_it.workers` stores one harness-native worker selector per harness only after delegated implementation needs one.
 
@@ -17,6 +18,10 @@ Example worker configuration:
 ```yaml
 version: 1
 implementation_delegation_default: "auto"
+plan_it:
+  workers:
+    codex:
+      agent: "<planning-worker-name>"
 plan_review:
   workers:
     codex:
@@ -32,7 +37,7 @@ ship_it:
       reasoning_effort: "<optional-harness-native-level>"
 ```
 
-The lasting default is optional, and `plan_review` and `ship_it` are optional until their workers are configured. Never create the file or an empty section merely because fallback mode is `always`. The current session is the orchestrator and must not be persisted.
+The lasting default is optional, and each worker section is absent until its owning stage configures it. Never create the file or an empty section merely because fallback mode is `always`. The current session is the orchestrator and must not be persisted.
 
 Each harness entry must use exactly one selector:
 
@@ -41,9 +46,9 @@ Each harness entry must use exactly one selector:
 
 Never combine `agent` and `model`, duplicate a named agent's model settings in `kickoff.yaml`, or overwrite another harness's entry.
 
-### Sharing Review And Implementation Workers
+### Sharing Workers Across Stages
 
-The review skills resolve `plan_review.workers`; `ship-it` resolves `ship_it.workers`. To use one worker for both, store the exact same selector in both active-harness entries. To use different workers, store different selectors. A named worker's native definition remains the only source of truth for its model, reasoning, instructions, and other settings. Preserve both sections when updating either one.
+`plan-it` resolves `plan_it.workers`, the review skills resolve `plan_review.workers`, and `ship-it` resolves `ship_it.workers`. To reuse one worker, store the exact same selector in the intended active-harness entries. To use different workers, store different selectors. A named worker's native definition remains the only source of truth for its model, reasoning, instructions, and other settings. Preserve every stage section when updating any one of them.
 
 ## First-Use Worker Bootstrap
 
@@ -67,7 +72,7 @@ If the harness cannot spawn workers:
 
 ## Auto-Mode Decision
 
-Lean toward delegation when one or more bounded tasks can run without blocking the orchestrator, especially when:
+Lean toward delegation when one or more bounded tasks can run without blocking the orchestrator. Before choosing a single packet, inspect the accepted plan for additional dependency-ready lanes that can run concurrently, especially when:
 
 - Two or more tasks are dependency-ready and own separate files or systems.
 - A focused implementation, test, documentation, migration-verification, or read-heavy task can run independently.
@@ -134,7 +139,7 @@ Make the manifest the contract between orchestrator and workers:
 - Integration notes
 ```
 
-Create the smallest useful number of tasks. Do not split work merely to maximize worker count.
+Create the smallest useful number of tasks, but prefer separate packets for genuinely independent workstreams with non-overlapping ownership and explicit integration contracts. A substantial plan should not collapse into one worker merely because one worker could technically do everything. Do not split work merely to maximize worker count.
 
 ## Dispatch Contract
 

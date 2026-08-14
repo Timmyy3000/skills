@@ -1,11 +1,17 @@
 ---
 name: plan-it
-description: Create interactive, Lavish-backed product or technical implementation plans for substantial features, architecture changes, frontend/backend work, cross-repo work, and user requests that need review before coding. Use when the user asks to plan, create a feature plan, implementation plan, technical plan, product plan, phased plan, or a visually reviewable plan artifact.
+description: Create or revise implementation plans through a configurable dedicated planning worker, producing full Lavish-backed artifacts or fast Markdown plans. Use when the user asks to plan, create a feature, technical, product, or phased plan, revise a reviewed plan, or when $kickoff delegates its planning stage before coding.
 ---
 
 # Plan It
 
-Create a reviewable implementation plan as a Lavish HTML artifact, using the target repo's own design language and the local planning template when available.
+Create a reviewable implementation plan through a dedicated planning worker. Use a Lavish HTML artifact for full planning and a concise Markdown artifact for fast planning.
+
+## Dedicated Planning Worker
+
+Keep the calling task as the orchestrator. Read [references/delegation.md](references/delegation.md) completely before creating or revising a plan. Let that reference own planning-worker discovery, `kickoff.yaml` configuration, dispatch, artifact validation, and review-driven revision handoffs.
+
+Use `plan_it.workers.<harness>` as the planning selector. Dispatch a fresh configured worker with durable task context and require it to inspect the repository before authoring the plan. Do not silently create the plan in the orchestrator when worker dispatch is expected.
 
 ## Simplicity Gate
 
@@ -20,9 +26,9 @@ Prefer the simplest elegant solution that fully satisfies the problem. Treat com
 
 Before finalizing the plan, perform a simplicity pass: remove optional work, collapse redundant phases, and verify that each remaining item earns its place.
 
-## Dependency Check
+## Full-Plan Dependency Check
 
-Before planning, verify that the `lavish` skill is available.
+Before full planning, verify that the `lavish` skill is available. Skip this dependency for fast Markdown planning.
 
 1. Check the active skill list and common local skill paths:
    - The active agent's configured skills directory
@@ -34,6 +40,8 @@ Before planning, verify that the `lavish` skill is available.
 
 ## Planning Workflow
 
+The configured planning worker performs this workflow. The orchestrator validates its returned artifact and structured result.
+
 1. Clarify only blocking ambiguity. Otherwise infer a practical scope from the repo, the request, and nearby docs.
 2. Inspect the target project before writing the artifact:
    - Workspace or repo agent instructions: `AGENTS.md`, `.cursor/rules/`, `.agent/`, `.agents/`, `.github/copilot-instructions.md`, `CLAUDE.md`
@@ -41,26 +49,27 @@ Before planning, verify that the `lavish` skill is available.
    - Existing plan folders: paths named like `plans`, `agent-plans`, `planning`, `docs/plans`, `docs/agent-plans`, or repo-specific equivalents
    - Frontend styling: Tailwind config, CSS variables, theme files, component library, shared layout components, brand assets, screenshots
    - Backend conventions: contributing guide, test commands, migrations guide, API docs, architecture docs
-3. If the target repo has a frontend design system, make the Lavish HTML artifact visually match it. Use the product's tokens, spacing, typography, component shapes, and color behavior where practical.
-4. If no local design system is discoverable, use Lavish's fallback design guidance. Run `npx -y --package=<lavish-package> lavish-axi design` if needed, using the fork package resolved in the dependency check.
-5. Open every Lavish playbook that matches the artifact content before writing HTML:
+3. For full planning, if the target repo has a frontend design system, make the Lavish HTML artifact visually match it. Use the product's tokens, spacing, typography, component shapes, and color behavior where practical.
+4. For full planning, if no local design system is discoverable, use Lavish's fallback design guidance. Run `npx -y --package=<lavish-package> lavish-axi design` if needed, using the fork package resolved in the dependency check.
+5. For full planning, open every Lavish playbook that matches the artifact content before writing HTML:
    - `plan` for implementation plans
    - `diagram` for architecture, flow, state, or sequence diagrams
    - `comparison` for options or current-vs-target behavior
    - `table` for dense work breakdowns, risks, or acceptance matrices
    - `input` when the artifact asks the user to choose scope, priority, or tradeoffs
    - `code` when showing files, APIs, schemas, or diffs
-6. Create the artifact at `.lavish/<descriptive-plan-name>.html` unless the user requested another path.
-7. Run `npx -y --package=<lavish-package> lavish-axi <html-file>` to open the review session, then `npx -y --package=<lavish-package> lavish-axi poll <html-file>` to receive annotations and layout warnings.
-8. Fix fresh error-severity layout warnings before asking the user to review. If warnings are persistent or low-severity, proceed with a short note.
-9. Apply user feedback, poll again with an agent reply, and end the session with `npx -y --package=<lavish-package> lavish-axi end <html-file>` when review is complete.
-10. After the user accepts the plan, export or save a read-only HTML archival copy in the appropriate repo plan location. Do not archive the editable Lavish working file as the accepted plan.
+6. For full planning, create the artifact at `.lavish/<descriptive-plan-name>.html` unless the user requested another path.
+7. For full planning, run `npx -y --package=<lavish-package> lavish-axi <html-file>` to open the review session, then `npx -y --package=<lavish-package> lavish-axi poll <html-file>` to receive annotations and layout warnings.
+8. For full planning, fix fresh error-severity layout warnings before asking the user to review. If warnings are persistent or low-severity, proceed with a short note.
+9. For fast planning, create a concise Markdown plan in the brief or the repository's established sibling plan location. Include objective and scope, simplest viable approach, affected files or systems, acceptance criteria, focused validation, material risks, rollback, and unresolved decisions.
+10. Route user feedback and review findings back through the planning worker. For full planning, poll again with an agent reply but keep the session open until acceptance.
+11. After the user accepts a full plan, end the session with `npx -y --package=<lavish-package> lavish-axi end <html-file>`, then export or save a read-only HTML archival copy in the appropriate repo plan location. Do not archive the editable Lavish working file as the accepted plan.
 
-## Plan Content Standard
+## Full Plan Content Standard
 
 Use the local plan template when one exists. Discover it from repo instructions first, then from conventional template names such as `PLAN_TEMPLATE.md`, `plan-template.md`, or `implementation-planning-guide.md`.
 
-Every plan artifact must include:
+Every full plan artifact must include:
 
 - Feature overview: problem, users, source docs, success outcome
 - User stories
@@ -93,7 +102,19 @@ For cross-repo work, include:
 - Separate validation commands per repo
 - Companion plan locations when the workspace requires self-contained repo plans
 
-## Accepted Plan Archive
+## Fast Plan Content Standard
+
+Keep a fast plan concise and proportional. Include:
+
+- Objective, scope, assumptions, and the simplest viable approach.
+- A small number of coherent steps with affected files or systems and exit criteria.
+- Acceptance criteria and focused validation commands where discoverable.
+- Material risks, rollback or fallback, and unresolved decisions.
+- Type-appropriate regression, measurement, preservation, migration, accessibility, or follow-up checks only when the brief or repository evidence requires them.
+
+Do not require user stories, exhaustive phases, or every frontend/backend full-plan subsection when they add no execution value. Preserve the simplicity gate and enough evidence for implementation and review.
+
+## Accepted Full-Plan Archive
 
 When the user accepts the plan, store a read-only HTML version in the repository so it can be reviewed, shared, and committed without needing the Lavish editor session.
 
@@ -120,9 +141,9 @@ Make the HTML artifact useful as a decision surface, not a prose dump.
 - Avoid decorative-only visuals. Every visual section should clarify a decision, sequence, dependency, or risk.
 - Prevent horizontal overflow with responsive grids, `minmax(0, 1fr)`, `min-width: 0`, wrapping, and truncation for long paths.
 
-## Output Back To The User
+## Output Back To The Orchestrator
 
-After opening the Lavish session, tell the user:
+Return the structured planning result required by [references/delegation.md](references/delegation.md). For full planning, also report:
 
 - The artifact path
 - The design source used: explicit user style, target repo design system, or Lavish fallback
