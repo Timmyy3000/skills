@@ -17,6 +17,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 | `code-review` | Review local branch changes before opening or updating a PR. |
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
+| `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |
 
 ## Install
 
@@ -29,7 +30,7 @@ npx skills add Timmyy3000/skills
 Install the full kickoff workflow:
 
 ```powershell
-npx skills add Timmyy3000/skills --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
+npx skills add Timmyy3000/skills --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
 ```
 
 Install selected skills:
@@ -41,6 +42,7 @@ npx skills add Timmyy3000/skills --skill adversarial-review
 npx skills add Timmyy3000/skills --skill simplicity-review
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
 npx skills add Timmyy3000/skills --skill better-docs
+npx skills add Timmyy3000/skills --skill grill-to-spec
 ```
 
 Install to specific agents:
@@ -61,14 +63,14 @@ For a private clone or local testing:
 
 ```powershell
 npx skills add .
-npx skills add . --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
+npx skills add . --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
 npx skills add . --skill plan-it --agent <agent-name>
 ```
 
 The helper script wraps the same CLI:
 
 ```powershell
-.\scripts\install-local.ps1 -Skills kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
+.\scripts\install-local.ps1 -Skills grill-to-spec,kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
 ```
 
 ## Validate

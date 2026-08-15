@@ -1,0 +1,7 @@
+interface:
+  display_name: "Grill to Spec"
+  short_description: "Interview ideas into durable product specs"
+  default_prompt: "Use $grill-to-spec to turn this feature idea into an approved product specification."
+
+policy:
+  allow_implicit_invocation: true

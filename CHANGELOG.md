@@ -16,6 +16,12 @@ This file records user-facing changes to the shared skills repository. Commit li
 - Routed adversarial, simplicity, user-requested, and final-acceptance handoffs back through the configured planning worker, including Lavish closure and accepted-plan archival.
 - Nudged `ship-it` toward multiple dependency-ready implementation workers for genuinely independent workstreams without forcing artificial decomposition.
 
+## 2026-08-15
+
+### Added
+
+- Added `grill-to-spec`, a Matt Pocock-inspired, MIT-attributed product-definition interview that writes durable repository-owned specifications before implementation planning.
+
 ## 2026-08-10
 
 - Updated Nabu owner-agent onboarding documentation ([`50b4fe0`](https://github.com/Timmyy3000/skills/commit/50b4fe0)).

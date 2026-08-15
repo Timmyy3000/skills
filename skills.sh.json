@@ -3,6 +3,14 @@
   "notGrouped": "bottom",
   "groupings": [
     {
+      "title": "Product Definition",
+      "description": "Skills for clarifying product intent and creating durable specifications.",
+      "skills": [
+        "grill-to-spec",
+        "better-docs"
+      ]
+    },
+    {
       "title": "Delivery Workflow",
       "description": "Skills for planning, reviewing, shipping, and opening pull requests.",
       "skills": [
