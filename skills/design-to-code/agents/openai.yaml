@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design to Code"
+  short_description: "Build and iteratively refine UI from Aphrodite evidence and visual comparison"
+  default_prompt: "Use Aphrodite and the target screenshot in an evidence-driven render/compare loop to implement this screen."

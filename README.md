@@ -18,6 +18,7 @@ This repository is the source of truth for team-maintained skills. Install from 
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 | `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |
+| `design-to-code` | Implement and refine interfaces from Aphrodite evidence through project audit, clarification, and render/compare iteration. |
 
 ## Install
 
@@ -43,6 +44,7 @@ npx skills add Timmyy3000/skills --skill simplicity-review
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
 npx skills add Timmyy3000/skills --skill better-docs
 npx skills add Timmyy3000/skills --skill grill-to-spec
+npx skills add Timmyy3000/skills --skill design-to-code
 ```
 
 Install to specific agents:
