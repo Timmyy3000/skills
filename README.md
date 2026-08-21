@@ -14,7 +14,7 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 | `kickoff` | Orchestrate delegated planning, review, implementation, and delivery. |
 | `task-master` | Turn roadmaps into executable, verifiable delivery tickets and coordinate their progress. |
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
-| `simplicity-review` | Independently challenge unnecessary plan complexity while preserving required safeguards. |
+| `simplicity-review` | Apply Ponytail's simplicity ladder to plans while preserving repository constraints and required safeguards. |
 | `plan-it` | Delegate full Lavish or fast Markdown implementation planning to a configured worker. |
 | `ship-it` | Execute a reviewed plan with Ponytail-governed implementation and diff simplification before normal code review. |
 | `code-review` | Review local branch changes before opening or updating a PR. |

@@ -1,7 +1,7 @@
 ---
 name: simplicity-review
-description: Run an independent simplicity review of an engineering work brief and revised implementation plan after adversarial review through a configurable dedicated worker. Use when a workflow needs a fresh-agent check for overengineering before plan approval or implementation while preserving requirements, accepted risk controls, and repository policies. Supports harness-native worker selection shared with or separated from implementation. Produce structured simplification findings, not implementation changes.
-version: 0.1.0
+description: Run a Ponytail-informed simplicity review of an engineering work brief and revised implementation plan after adversarial review through a configurable dedicated worker. Use when a workflow needs a fresh-agent check for over-planning before approval or implementation while preserving requirements, accepted risk controls, and repository policies. Produce structured simplification findings, not implementation changes.
+version: 0.2.0
 ---
 
 # Simplicity Review
@@ -88,15 +88,18 @@ Trace every proposed component, abstraction, dependency, phase, migration, confi
 - A repository policy or established local pattern.
 - An accepted adversarial-review concern.
 
-Challenge items that lack that traceability. Look especially for:
+Challenge items that lack that traceability. Apply this Ponytail-informed ladder
+to each proposed item and stop at the first option that satisfies the required
+outcome:
 
-- New abstractions, services, layers, or dependencies where an existing pattern is sufficient.
-- Speculative scale, reuse, extensibility, configurability, or edge cases not required now.
-- Broad refactors bundled into a focused feature, bug fix, or improvement.
-- Parallel mechanisms, compatibility paths, flags, or fallbacks without a concrete need.
-- Excessive phase splitting or coordination overhead for a small change.
-- Validation work that is duplicative rather than risk-based.
-- Custom infrastructure that recreates repository capabilities.
+1. Remove or defer work that serves no current requirement or demonstrated risk.
+2. Reuse an established repository pattern instead of adding a parallel path.
+3. Prefer standard-library, native-platform, or existing dependency capabilities over custom machinery.
+4. Inline abstractions, configuration, or flexibility that have only one present use.
+5. Choose the fewest phases, coordination steps, files, and validations that still cover the real risk.
+
+Flag broad refactors, speculative scale or reuse, unnecessary compatibility
+paths, and custom infrastructure that fail this ladder.
 
 Do not equate fewer files or fewer lines with better design. Keep complexity that reduces real risk, follows the codebase's architecture, or makes the required behavior clearer and safer.
 

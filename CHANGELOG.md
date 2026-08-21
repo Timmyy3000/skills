@@ -2,6 +2,13 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## 0.3.0 - 2026-08-21
+
+### Changed
+
+- Embedded Ponytail's YAGNI, reuse, native-platform, and minimum-machinery principles into the existing repository-aware simplicity review without adding another review agent.
+- Bumped `simplicity-review` to 0.2.0 and `kickoff` plus the repository release to 0.3.0 so installed workflows discover the update.
+
 ## 0.2.0 - 2026-08-21
 
 ### Added
