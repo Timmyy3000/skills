@@ -7,6 +7,7 @@ This file records user-facing changes to the shared skills repository. Commit li
 ### Changed
 
 - Embedded Ponytail's YAGNI, reuse, native-platform, and minimum-machinery principles into the existing repository-aware simplicity review without adding another review agent.
+- Made Kickoff's version preflight read the repository's one-line `VERSION` file instead of parsing non-standard skill frontmatter.
 - Bumped `simplicity-review` to 0.2.0 and `kickoff` plus the repository release to 0.3.0 so installed workflows discover the update.
 
 ## 0.2.0 - 2026-08-21
