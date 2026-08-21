@@ -1,6 +1,7 @@
 ---
 name: adversarial-review
 description: Run an independent adversarial review of an engineering work brief, implementation plan, investigation output, or delivery proposal through a configurable dedicated worker. Use when a workflow needs a fresh-agent critique before accepting a plan, especially from $kickoff after $plan-it creates a plan. Supports harness-native worker selection shared with or separated from implementation. Produces structured findings that can be fed back into planning, not implementation changes.
+version: 0.1.0
 ---
 
 # Adversarial Review

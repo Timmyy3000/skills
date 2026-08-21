@@ -1,6 +1,7 @@
 ---
 name: create-pr
 description: Prepare and create a pull request from the current branch. Use when the user asks to create a PR, open a pull request, prepare a branch for review, or ship changes through PR. Run project validations, invoke $code-review, triage P0-P2 findings, fix blocking bugs, rerun checks, push the branch, and create a standardized PR with summary, scope, tests, test plan, and local review findings.
+version: 0.1.0
 ---
 
 # Create PR

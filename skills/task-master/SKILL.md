@@ -1,6 +1,7 @@
 ---
 name: task-master
 description: Create and maintain a lightweight file-based delivery board made of milestones, epics, and executable tickets. Use when the user invokes /task-master or asks Codex to break a project into trackable work, set up or update an epic tracker, select the next ticket, coordinate agents, plan safe parallel work, resume an ongoing project, or verify progress toward an MVP or release.
+version: 0.1.0
 ---
 
 # Task Master

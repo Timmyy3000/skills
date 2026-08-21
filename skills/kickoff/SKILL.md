@@ -1,6 +1,7 @@
 ---
 name: kickoff
 description: Start an IC engineering workflow from initial intent through planning, independent adversarial and simplicity reviews, implementation, pull request creation, and review monitoring. Use when the user invokes /kickoff or $kickoff, wants to start feature work, bug fixing, improvements, refactors, hotfixes, investigations, or explorations, or asks for a full human-reviewed plan or a fast agent-reviewed Markdown plan before execution. When worker configuration is missing, require first-use subagent configuration before routing work.
+version: 0.1.0
 ---
 
 # Kickoff

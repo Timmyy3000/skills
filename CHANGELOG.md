@@ -2,6 +2,15 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## 0.1.0 - 2026-08-20
+
+### Added
+
+- Added the repository release version in [`VERSION`](VERSION).
+- Added SemVer metadata to every published skill's `SKILL.md` frontmatter.
+- Added explicit full-plan gates for the design reference, Lavish playbooks, semantic visual structures, and HTML presentation quality.
+- Established SemVer for shared-skill repository releases; user-facing workflow changes continue to be recorded here.
+
 ## 2026-08-14
 
 ### Added

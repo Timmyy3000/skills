@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Pre-PR code review for local branch changes. Use when the user asks to review changes before a PR, check the current branch, inspect a diff for issues, or run a code review. Analyze the branch diff against its base for correctness bugs, failure modes, security risks, project-guideline violations, regressions, and missing tests. Report only actionable findings with file and line references.
+version: 0.1.0
 ---
 
 # Code Review

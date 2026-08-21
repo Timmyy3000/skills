@@ -4,6 +4,9 @@ Shared agent skills for Docsyde engineering workflows.
 
 This repository is the source of truth for team-maintained skills. Install from here instead of copying skills into individual product repositories.
 
+The current repository release is recorded in [`VERSION`](VERSION). Releases use
+Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Skills
 
 | Skill | Purpose |
@@ -75,6 +78,17 @@ The helper script wraps the same CLI:
 .\scripts\install-local.ps1 -Skills grill-to-spec,kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
 ```
 
+To inspect the versions of skills installed for Codex on Windows:
+
+```powershell
+Get-ChildItem "$HOME\.agents\skills" -Directory | ForEach-Object {
+  $frontmatter = Get-Content (Join-Path $_.FullName "SKILL.md") -Raw
+  if ($frontmatter -match "(?m)^version:\s*(.+)$") {
+    "{0}: {1}" -f $_.Name, $Matches[1].Trim()
+  }
+}
+```
+
 ## Validate
 
 Run:
@@ -84,7 +98,7 @@ Run:
 npx skills add . --list
 ```
 
-Each skill folder must contain a valid `SKILL.md`. The `name` in frontmatter should match the folder name.
+Each skill folder must contain a valid `SKILL.md`. The `name` in frontmatter should match the folder name, and every published skill must expose a SemVer `version` in frontmatter so users can identify the installed revision.
 
 ## Maintaining Skills
 

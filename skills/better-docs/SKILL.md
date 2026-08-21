@@ -1,6 +1,7 @@
 ---
 name: better-docs
 description: Edit existing product-document drafts into clear, concise, digestible writing while preserving their intended meaning, facts, product terminology, document type, and authorial voice. Use when asked to improve, polish, tighten, rewrite, or make easier to read a PRD, product spec, user story, decision document, product brief, RFC, launch plan, product philosophy, or similar product-facing draft. Do not use to create a document from scratch, impose a template, or evaluate the underlying product strategy.
+version: 0.1.0
 ---
 
 # Better Docs

@@ -1,6 +1,7 @@
 ---
 name: grill-to-spec
 description: Turn an ambiguous product or feature idea into a durable, repository-owned product specification through a decision-tree interview. Use when feature work lacks an approved spec, when a product owner needs a handoff artifact for engineers, or when kickoff must resolve product ambiguity before planning. Do not use for clear small bugs or refactors that already have precise behavior and acceptance criteria.
+version: 0.1.0
 ---
 
 # Grill to Spec

@@ -1,6 +1,7 @@
 ---
 name: simplicity-review
 description: Run an independent simplicity review of an engineering work brief and revised implementation plan after adversarial review through a configurable dedicated worker. Use when a workflow needs a fresh-agent check for overengineering before plan approval or implementation while preserving requirements, accepted risk controls, and repository policies. Supports harness-native worker selection shared with or separated from implementation. Produce structured simplification findings, not implementation changes.
+version: 0.1.0
 ---
 
 # Simplicity Review

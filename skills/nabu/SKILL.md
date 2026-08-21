@@ -1,6 +1,7 @@
 ---
 name: nabu
 description: Work with self-hosted Nabu knowledge spaces through native remote MCP first, including owner-agent connection links, bearer authentication, shared-space invites, scoped credentials, note traversal, and revision-aware mutations. Use when an agent must discover, authenticate, read, write, share, redeem, or verify Nabu data, or use the HTTP API because MCP is unavailable or explicitly requested.
+version: 0.1.0
 ---
 
 # Nabu agent contract

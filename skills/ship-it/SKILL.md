@@ -1,6 +1,7 @@
 ---
 name: ship-it
 description: Execute a defined product or engineering problem from an accepted full or fast-path plan through implementation, pull request readiness, and review monitoring. Use when the user says "Ship it," asks to execute an agreed plan, or arrives from $kickoff with implementation delegation set to never, auto, or always. Support harness-agnostic worker configuration and delegated implementation without changing independent plan-review behavior.
+version: 0.1.0
 ---
 
 # Ship It
