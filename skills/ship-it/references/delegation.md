@@ -126,6 +126,8 @@ Make the manifest the contract between orchestrator and workers:
 
 ### Required Context
 
+- Ponytail skill at `full` intensity; accepted requirements and safeguards take precedence.
+
 ### Acceptance Criteria
 
 ### Validation
@@ -149,6 +151,7 @@ For each dependency-ready task:
 - Prefer a fresh worker context where supported.
 - Pass the task ID, manifest path, brief path, plan path, relevant review findings, applicable repository instructions, and exact task-workspace or worktree path.
 - Tell the worker to read those artifacts before editing.
+- Require the worker to invoke Ponytail Full and confirm activation before editing.
 - Give exclusive file or system ownership.
 - Prohibit scope expansion, unrelated edits, additional worker spawning, and silent architecture changes.
 - Require the structured result listed in the manifest.

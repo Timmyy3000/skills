@@ -16,7 +16,7 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
 | `simplicity-review` | Independently challenge unnecessary plan complexity while preserving required safeguards. |
 | `plan-it` | Delegate full Lavish or fast Markdown implementation planning to a configured worker. |
-| `ship-it` | Execute a reviewed plan through PR readiness, with optional harness-agnostic worker delegation. |
+| `ship-it` | Execute a reviewed plan with Ponytail-governed implementation and diff simplification before normal code review. |
 | `code-review` | Review local branch changes before opening or updating a PR. |
 | `create-pr` | Prepare and create a GitHub pull request from local changes. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
@@ -29,6 +29,7 @@ Install all skills with the Skills CLI:
 
 ```powershell
 npx skills add Timmyy3000/skills
+npx skills add DietrichGebert/ponytail --skill ponytail --skill ponytail-review
 ```
 
 Install the full kickoff workflow:
@@ -36,6 +37,10 @@ Install the full kickoff workflow:
 ```powershell
 npx skills add Timmyy3000/skills --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
 ```
+
+The Ponytail command in the primary install block supplies two dependencies for
+the kickoff execution loop. A host plugin that already exposes `ponytail` and
+`ponytail-review` satisfies them without another installation.
 
 Install selected skills:
 
@@ -49,6 +54,10 @@ npx skills add Timmyy3000/skills --skill better-docs
 npx skills add Timmyy3000/skills --skill grill-to-spec
 npx skills add Timmyy3000/skills --skill design-to-code
 ```
+
+At the beginning of each kickoff run, the skill compares its installed SemVer
+with the canonical version and asks before running a scoped update. Declining or
+being offline does not block the workflow.
 
 Install to specific agents:
 

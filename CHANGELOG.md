@@ -2,6 +2,19 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## 0.2.0 - 2026-08-21
+
+### Added
+
+- Added a bounded kickoff version preflight that asks before updating an outdated installation and remains usable offline.
+- Added `ponytail` and `ponytail-review` as portable kickoff workflow dependencies.
+- Added a dispositioned Ponytail review of the integrated diff before the normal correctness and security review.
+
+### Changed
+
+- Required every `ship-it` implementation executor, whether the orchestrator or a delegated worker, to use Ponytail Full without overriding accepted requirements or safeguards.
+- Bumped `kickoff`, `ship-it`, and the repository release to 0.2.0.
+
 ## 0.1.0 - 2026-08-20
 
 ### Added

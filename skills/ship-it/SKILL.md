@@ -1,12 +1,24 @@
 ---
 name: ship-it
 description: Execute a defined product or engineering problem from an accepted full or fast-path plan through implementation, pull request readiness, and review monitoring. Use when the user says "Ship it," asks to execute an agreed plan, or arrives from $kickoff with implementation delegation set to never, auto, or always. Support harness-agnostic worker configuration and delegated implementation without changing independent plan-review behavior.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Ship It
 
 Take a reviewed plan from execution handoff through implementation, local review, pull request creation, and review monitoring. Keep the current agent as orchestrator and use implementation workers only when the resolved delegation preference permits them.
+
+## Dependency Check
+
+Before execution, verify that `ponytail` and `ponytail-review` are available.
+Accept host-namespaced equivalents such as `ponytail:ponytail` and
+`ponytail:ponytail-review`. If either capability is missing, stop and suggest:
+
+```powershell
+npx skills add DietrichGebert/ponytail --skill ponytail --skill ponytail-review
+```
+
+A host plugin that already exposes both skills satisfies this dependency.
 
 ## Required Handoff
 
@@ -66,8 +78,21 @@ Read [references/delegation.md](references/delegation.md) completely when `auto`
 
 Keep the current agent responsible for orchestration, dependency ordering, shared decisions, integration, and final validation.
 
+Before any implementation edit, every executor must invoke the `ponytail` skill
+at `full` intensity. This applies to the current orchestrator in `never` mode
+and to every delegated implementation worker in `auto` or `always` mode. Record
+the previous Ponytail mode when the host exposes it so it can be restored before
+normal code review.
+
+Ponytail governs implementation economy only. The accepted plan, explicit
+requirements, repository policies, correctness, security, data integrity,
+accessibility, compatibility, accepted review safeguards, and required
+validation take precedence. Ponytail must not reopen settled scope or remove
+protected complexity.
+
 For orchestrator-only execution:
 
+- Activate Ponytail Full before editing and keep it active through integration.
 - Maintain a short phase list mapped to the accepted plan.
 - Implement each behavior with Red/Green TDD when practical.
 - Run the smallest useful validation after each meaningful phase.
@@ -75,6 +100,7 @@ For orchestrator-only execution:
 For delegated execution:
 
 - Follow the worker discovery, configuration, manifest, dispatch, and integration contract in `references/delegation.md`.
+- Include the `ponytail` skill and `full` intensity in every implementation packet; require the worker to confirm activation before editing.
 - Prefer multiple workers when the accepted plan contains genuinely independent, non-overlapping workstreams that can be reconciled through explicit contracts. Use dependency-aware waves when later packets depend on shared foundations.
 - Create bounded work packets with explicit dependencies, file ownership, acceptance criteria, and validation.
 - Dispatch only dependency-ready tasks. Run independent tasks in parallel and coupled tasks in sequential waves.
@@ -96,6 +122,10 @@ For both paths:
 - Run task-specific acceptance and regression validation from the plan.
 - Re-run relevant checks after worker integration, even when workers reported them as passing.
 - Record any validation that could not run and the exact reason.
+- Invoke `ponytail-review` once on the complete integrated diff before normal code review. Treat it as an over-engineering review only, not a correctness or security review.
+- Record every Ponytail finding as accepted or rejected against the plan, requirements, repository policy, and protected complexity. Never apply its findings automatically.
+- Apply accepted simplifications, rerun affected validation, and repeat the Ponytail review only when those edits materially restructure the diff; do not create a cosmetic review loop.
+- Restore the executor's previous Ponytail mode when known, otherwise deactivate it, before invoking normal code review.
 - Invoke `code-review` before PR creation and resolve actionable blocking findings.
 
 ### 6. Open The Pull Request
@@ -125,6 +155,7 @@ For both paths:
 - Default implementation delegation to `always` when kickoff supplies no explicit or saved preference.
 - Never spawn implementation workers only when the user selected `never`/no subagents for the task or explicitly saved that repository default.
 - Never treat implementation delegation as permission to skip independent plan reviews.
+- Never let Ponytail override the accepted execution contract or replace normal correctness and security review.
 - Never persist an orchestrator model; the orchestrator is the current agent session.
 - Never hardcode Codex, Claude Code, OpenCode, or provider-specific model names into the portable workflow.
 - Never silently substitute or override a configured worker selector.
