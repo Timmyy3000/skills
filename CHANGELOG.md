@@ -6,7 +6,7 @@ This file records user-facing changes to the shared skills repository. Commit li
 
 ### Added
 
-- Added a bounded kickoff version preflight that asks before updating an outdated installation and remains usable offline.
+- Added a bounded kickoff version preflight that asks before updating an outdated installation, updates the compatible repo-owned workflow set together, and remains usable offline.
 - Added `ponytail` and `ponytail-review` as portable kickoff workflow dependencies.
 - Added a dispositioned Ponytail review of the integrated diff before the normal correctness and security review.
 

@@ -41,12 +41,17 @@ Before intake, check once whether this installed `kickoff` skill is current:
 3. If the canonical version is newer, ask: `Kickoff <installed> is installed;
    <latest> is available. Update before continuing?`
 4. Update only after the user agrees. Discover which manager owns the installed
-   copy and whether it is global or project-scoped. For Skills CLI installs, run
-   `npx skills update kickoff` with the matching `--global` or `--project` scope
-   and `--yes`; otherwise use the owning manager's supported update flow. Never
-   overwrite an installed skill directly. Re-read the installed file and verify
-   the expected version. Tell the user to start `/kickoff` again so the current
-   session does not continue with the previously loaded instructions.
+   copy and whether it is global or project-scoped. Update the compatible
+   repo-owned workflow set together: `kickoff`, `plan-it`, `adversarial-review`,
+   `simplicity-review`, `ship-it`, `code-review`, and `create-pr`. For Skills CLI
+   installs, pass all seven names to `npx skills update` with the matching
+   `--global` or `--project` scope and `--yes`; otherwise use the owning manager's
+   supported update flow. Never overwrite an installed skill directly. Verify
+   every workflow skill updated successfully and the dependency check below
+   passes. If the update is partial, report the mismatches and stop before
+   intake. Tell the user to start `/kickoff` again so the current session does
+   not continue with the previously loaded instructions. Ponytail remains owned
+   by its separate skill package or plugin and is checked below.
 5. If the user declines, record that choice in the work brief and continue. If
    the check is unavailable or malformed, report it once and continue without
    guessing or blocking offline work.
