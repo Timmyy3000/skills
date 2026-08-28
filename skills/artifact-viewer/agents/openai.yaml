@@ -1,0 +1,4 @@
+interface:
+  display_name: "Artifact Viewer"
+  short_description: "Publish HTML artifacts to an Artifact Viewer API"
+  default_prompt: "Use $artifact-viewer to publish self-contained HTML artifacts through the configured Artifact Viewer API, maintain named URLs, and verify the live result without exposing credentials."
