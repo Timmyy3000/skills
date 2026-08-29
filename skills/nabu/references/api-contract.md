@@ -53,10 +53,14 @@ chat. Require owner authorization for every shared-space management endpoint.
 
 ### Owner-agent connection link
 
-For non-technical owner onboarding, the human owner uses `Settings → Agents →
-Connect an agent`, chooses `read` or `read/write`, and generates a one-time
-connection URL. The agent must redeem the exact full URL; it must not fetch the
-URL with `GET`:
+For owner onboarding, direct the human to `${NABU_URL}/settings/agents` and
+give concrete instructions: sign in to Nabu, choose **read and write** for
+normal note management (or **read only** for browsing and search), click
+**generate connection link**, and paste the complete one-time URL back to the
+agent. The human uses the owner password only in Nabu's login page; the agent
+does not need the password and must take ownership of setup after receiving
+the link. The agent must redeem the exact full URL; it must not fetch the URL
+with `GET`:
 
 ```text
 POST ${NABU_URL}/api/agent/connections/redeem
