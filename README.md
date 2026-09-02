@@ -107,7 +107,10 @@ Run:
 npx skills add . --list
 ```
 
-Each skill folder must contain a valid `SKILL.md`. The `name` in frontmatter should match the folder name, and every published skill must expose a SemVer `version` in frontmatter so users can identify the installed revision.
+Each skill folder must contain a valid `SKILL.md`. The `name` in frontmatter
+should match the folder name, except for explicit compatibility aliases in the
+validator, and every published skill must expose a SemVer `version` in
+frontmatter so users can identify the installed revision.
 
 ## Maintaining Skills
 
