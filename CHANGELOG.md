@@ -8,6 +8,8 @@ This file records user-facing changes to the shared skills repository. Commit li
 
 - Made Nabu owner onboarding direct users to `${NABU_URL}/settings/agents` with concrete permission and connection-link steps, then require the agent to complete redemption, credential storage, MCP configuration, and verification.
 - Added a bounded Nabu skill version preflight that offers a manager-owned update or reinstall when a newer version is available and remains usable offline.
+- Aligned Kickoff's version metadata with the repository release so its version preflight does not repeatedly prompt after a bundle update.
+- Accepted Artifact Viewer's stable published name as a compatibility alias during skill validation.
 - Bumped `nabu` to 0.2.0 and the repository release to 0.4.0.
 
 ## 0.3.0 - 2026-08-21
