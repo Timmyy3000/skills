@@ -1,159 +1,87 @@
 ---
 name: simplicity-review
-description: Run a Ponytail-informed simplicity review of an engineering work brief and revised implementation plan after adversarial review through a configurable dedicated worker. Use when a workflow needs a fresh-agent check for over-planning before approval or implementation while preserving requirements, accepted risk controls, and repository policies. Produce structured simplification findings, not implementation changes.
-version: 0.2.0
+description: Independently force an engineering plan toward the least machinery that achieves the requested outcome while preserving constraints and safety controls. Use for full plans, or when a fast/tiny plan introduces material complexity; return reconciled plan feedback, not code changes.
+version: 0.5.0
 ---
 
 # Simplicity Review
 
-Review a proposed plan for unnecessary complexity after its correctness and risk gaps have been challenged. Seek the least complicated solution that fully satisfies the current problem.
+Force the plan toward the least machinery that achieves the requested outcome and covers demonstrated risks. Challenge proposed mechanisms without arguing against the user's desired outcome.
 
-Do not implement changes or rewrite the plan. Return evidence-backed recommendations to the calling workflow.
+## When To Run
 
-## Dedicated Review Worker And Inputs
+- Required for `full` work.
+- Required for `fast` or `tiny` work when the plan or adversarial revision adds a material layer, abstraction, dependency, variant, configuration surface, workflow, migration, or coordination mechanism.
+- Optional for a lean direct change that only reuses an established path.
 
-When the active harness can spawn workers, run this review in a fresh dedicated worker session. Keep the current agent as the orchestrator. Fresh means independent, not blind. Use a new worker session for this review even when adversarial review or implementation uses the same named worker.
+Skipping this review must be recorded in the episode state with the route-based reason; it is not silently omitted.
 
-Use the repository's existing agent-workspace convention and its single `kickoff.yaml`. Store one harness-native review selector under `plan_review.workers`; that selector is shared by `adversarial-review` and `simplicity-review`:
+## Inputs And Independence
 
-```yaml
-version: 1
-plan_it:
-  workers:
-    <harness>:
-      agent: "<planning-worker-name>"
-plan_review:
-  workers:
-    <harness>:
-      agent: "<native-agent-name>"
-ship_it:
-  workers:
-    <harness>:
-      agent: "<same-or-different-native-agent-name>"
-```
+Use a fresh `plan_review.workers.<harness>` session. Pass the brief, revised plan, episode state, complete adversarial findings and dispositions, repository policies, and focused evidence pointers. Do not pass the orchestrator's preferred simplification.
 
-Each harness entry must use exactly one selector:
+Use the repository's existing agent-workspace convention and single `kickoff.yaml`. A selector under `plan_review.workers.<harness>` contains exactly one of: an exact harness-native `agent`, or a direct `model` with optional `reasoning_effort` when named workers are unsupported. Honor an explicit current choice, validate a saved selector before use, and never substitute a worker silently. If missing, discover available native workers before asking the user to select or configure one, then update only the active harness entry while preserving every other key.
 
-- `agent`: an exact harness-native named worker. Its native definition is the source of truth for model, reasoning, instructions, and other settings.
-- `model`: a direct per-spawn model selector, with optional `reasoning_effort`, only when the harness does not require named workers.
+The review is read-only. Do not rewrite the plan, implement code, or spawn additional workers. Under Kickoff, an unavailable independent worker sets the review phase to `needs-input` or `blocked` until the user chooses a valid worker or explicitly accepts a non-independent fallback. In standalone use, current-session review is allowed only after the same explicit acceptance and must be labeled non-independent.
 
-To share a worker with planning or implementation, use the exact same selector in the intended stage entries. To use a separate review worker, configure different selectors. Never combine `agent` and `model`, duplicate a named worker's settings in `kickoff.yaml`, or persist the current orchestrator.
+## Priority
 
-Resolve the active harness and worker before dispatching:
+Preserve, in order:
 
-1. Honor an explicit worker choice supplied for this task.
-2. Read and validate `plan_review.workers.<harness>` when it exists.
-3. When no review selector exists but `plan_it.workers.<harness>` or `ship_it.workers.<harness>` does, discover the existing selectors and ask whether to reuse one or configure a separate review worker. If the user chooses reuse, copy only that exact selector into `plan_review.workers.<harness>`.
-4. If named workers are supported but none is selected, discover available native workers before asking the user to select or confirm one. If none is suitable, ask for the name, model, supported reasoning level, and personal or project scope, explain the native definition that must be created, create the smallest valid definition, and validate it.
-5. If the harness dispatches directly by model, ask for the model and supported reasoning level, validate them, and store only `model` plus optional `reasoning_effort`.
-6. Update only the active harness entry in the existing `kickoff.yaml`, preserving all other keys, including `plan_it`, `ship_it`, and other harnesses.
+1. the user's desired outcome, acceptance criteria, and explicit constraints;
+2. repository policy and established architecture;
+3. correctness, security, privacy, data integrity, compatibility, and operational safety;
+4. accepted adversarial outcomes;
+5. simplicity.
 
-Do not create `.agent/` or `.agents/` solely for worker configuration when the repository has no such convention. Do not configure inactive harnesses. Do not ask for model or reasoning settings when the user selects an existing named worker.
+Accepted safeguards are outcomes to preserve, not necessarily mechanisms to preserve. Treat a proposed implementation mechanism as challengeable unless the user explicitly confirms that the mechanism itself is required.
 
-Revalidate the saved selector before every review. If a named worker is unavailable or invalid, do not add overrides or substitute another worker silently; ask whether to repair it or choose a replacement. If the harness cannot spawn workers, do not create invalid configuration. Run in the current session only as an explicit fallback and state that the review was not independent.
+## Method
 
-Require the calling workflow to pass:
+Trace the real flow first, then run three passes. Stop at the first cheaper option that fully holds.
 
-- This skill.
-- The original work brief and acceptance criteria.
-- The revised plan under review.
-- The adversarial-review output and the disposition of each meaningful finding.
-- Relevant repository instructions, conventions, source documents, and code references.
-- A short instruction to assess whether the plan solves the problem with the least necessary complexity.
+1. **Delete.** Does the planned item need to exist now? Remove or defer speculative work, parallel paths, scaffolding, flexibility, phases, and validations that serve no current outcome or demonstrated risk.
+2. **Reuse.** Prefer, in order, an established repository path, the standard library, a native platform capability, then an already-installed dependency. Do not introduce a parallel solution when one already exists.
+3. **Compress.** Inline single-use abstractions and configuration, collapse layers and handoffs, reduce touched surfaces, and select the smallest coherent change at the root cause.
 
-Do not accept the calling agent's private conclusions, expected findings, or preferred simplifications. Read the supplied evidence and inspect referenced repository files before judging the plan.
+Only then keep new machinery, with a one-sentence statement of the present requirement or risk that earns its cost. Deletion is preferred to addition, but the smallest change in the wrong place is not simplification. Do not weaken correctness, accessibility, security, privacy, integrity, compatibility, or explicit constraints.
 
-Tell the worker to make no implementation changes, spawn no additional workers, and return only the structured review below. Pass the complete adversarial review and finding dispositions as evidence, not as the expected conclusion.
+Do not repeat adversarial correctness review unless a proposed simplification would affect a safeguard. Limit `Protected Complexity` to non-obvious items whose removal would cause concrete harm; it must not become a defense of the entire plan.
 
-If required inputs are missing, return `Needs context` and list only the missing material.
-
-## Review Priority
-
-Apply this order of precedence:
-
-1. Explicit requirements and acceptance criteria.
-2. Repository policies and established conventions.
-3. Correctness, security, data integrity, compatibility, and operational safety.
-4. Accepted adversarial-review concerns.
-5. Simplicity and implementation economy.
-
-Treat an accepted adversarial concern as an outcome that must remain protected, not necessarily as an implementation that must be preserved verbatim. Recommend a simpler mitigation only when it addresses the same concern. Never silently remove a requirement, repository constraint, risk control, or accepted finding to make the plan smaller.
-
-## Review Method
-
-Trace every proposed component, abstraction, dependency, phase, migration, configuration option, and cross-system interaction to at least one of:
-
-- A current requirement or acceptance criterion.
-- A demonstrated risk or failure mode.
-- A repository policy or established local pattern.
-- An accepted adversarial-review concern.
-
-Challenge items that lack that traceability. Apply this Ponytail-informed ladder
-to each proposed item and stop at the first option that satisfies the required
-outcome:
-
-1. Remove or defer work that serves no current requirement or demonstrated risk.
-2. Reuse an established repository pattern instead of adding a parallel path.
-3. Prefer standard-library, native-platform, or existing dependency capabilities over custom machinery.
-4. Inline abstractions, configuration, or flexibility that have only one present use.
-5. Choose the fewest phases, coordination steps, files, and validations that still cover the real risk.
-
-Flag broad refactors, speculative scale or reuse, unnecessary compatibility
-paths, and custom infrastructure that fail this ladder.
-
-Do not equate fewer files or fewer lines with better design. Keep complexity that reduces real risk, follows the codebase's architecture, or makes the required behavior clearer and safer.
-
-For each concern, identify the smallest alternative that preserves behavior, constraints, and validation. Prefer deferring unrelated work over expanding the current scope.
-
-## Classification
-
-Classify each reviewed item as:
-
-- `Keep`: The complexity is justified. Preserve it.
-- `Simplify`: The same required outcome can be achieved with less machinery.
-- `Remove/Defer`: The item has no demonstrated current value or belongs in separate follow-up work.
-- `Conflict`: Simplification would weaken a requirement or risk control, or the supplied inputs disagree and need an owner decision.
-
-Do not manufacture findings to appear useful. A lean plan may receive a `Lean` verdict with no simplification findings.
-
-## Output Format
-
-Return only a structured review:
+## Output
 
 ```markdown
 # Simplicity Review
-
 ## Verdict
-
-<Lean / Simplification recommended / Needs decision / Needs context>
+Lean | Simplification recommended | Needs decision | Needs context
 
 ## Findings
+| ID | Classification | Plan area | What to cut | Replacement | Preserved outcome |
+| --- | --- | --- | --- | --- | --- |
 
-| Classification | Plan area | Evidence | Recommendation | Preserved outcome |
-| --- | --- | --- | --- | --- |
-| Keep/Simplify/Remove or Defer/Conflict | <item> | <requirement, policy, risk, or source> | <specific action> | <behavior or safeguard retained> |
+## Complexity Delta
+- Plan steps/phases: <before> -> <after>
+- New layers/abstractions: <before> -> <after>
+- New dependencies/services: <before> -> <after>
+- New configuration/variants: <before> -> <after>
+- Touched surfaces: <before> -> <after>
+- Removed or avoided:
 
 ## Protected Complexity
+- <mechanism and demonstrated reason>
 
-- <non-obvious complexity that must remain and why>
+## Plan Feedback
+- <specific revision, or none>
 
-## Plan Feedback For Revision
-
-- <specific revision for the calling planner>
-
-## Residual Risk
-
-- <risk that remains after the recommended simplification>
-
-## Confidence
-
-<High / Medium / Low> - <one sentence reason>
+## Review Metrics
+- Started at:
+- Completed at:
+- Components challenged:
+- Simplify/remove findings:
+- Net machinery removed:
+- Independent worker: yes | no
 ```
 
-Include only meaningful `Keep` items in `Protected Complexity`; do not inventory the whole plan. If the verdict is `Lean`, state why in one sentence and leave revision feedback empty.
+Use stable IDs such as `SIM-001` and classify findings as `Keep`, `Simplify`, `Remove/Defer`, or `Conflict`. Do not invent numeric deltas when the plan lacks enough detail; use `unknown` and list concrete removals instead.
 
-## Handoff Back To Caller
-
-Require the calling workflow to reconcile every `Simplify`, `Remove/Defer`, and `Conflict` finding. Feed accepted revision feedback back into the planner, preserve protected complexity, and record rejected feedback with a reason.
-
-Do not start implementation while a material `Conflict` remains unresolved. Re-run this review only when revisions materially change the architecture, scope, or risk controls.
+The caller records a disposition for every `Simplify`, `Remove/Defer`, and `Conflict`, routes accepted feedback through `plan-it`, then checks the revised plan against the findings before implementation. Do not proceed with an unresolved material `Conflict` or an accepted finding missing from the revised plan. A full independent re-review is needed only after a material structural revision; reconciliation itself is mandatory.

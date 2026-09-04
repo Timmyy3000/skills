@@ -1,103 +1,67 @@
 ---
 name: code-review
-description: Pre-PR code review for local branch changes. Use when the user asks to review changes before a PR, check the current branch, inspect a diff for issues, or run a code review. Analyze the branch diff against its base for correctness bugs, failure modes, security risks, project-guideline violations, regressions, and missing tests. Report only actionable findings with file and line references.
-version: 0.1.0
+description: Review the current branch or pull-request diff for actionable correctness, security, reliability, regression, and test issues before PR creation or after material fixes. Use a fresh reviewer when change risk or size justifies independence; report evidence-backed findings only.
+version: 0.5.0
 ---
 
 # Code Review
 
-Review local branch changes before a pull request. Prioritize real correctness, security, reliability, and maintainability issues over style preferences.
+Review only changes introduced by the target diff. Prioritize defects that can affect behavior or safe delivery; omit generic style advice and pre-existing issues.
 
-## Workflow
+This is the correctness-focused second pass after `ponytail-review`. Do not duplicate its complexity audit, and do not assume that a short diff is correct merely because the Ponytail pass accepted it.
 
-1. Create a short todo list for the review.
-2. Identify the current branch, base branch, changed files, diff stats, and commits being reviewed.
-3. Stop early if there are no changes to review or the branch is the same as the base branch.
-4. Check for uncommitted changes and state whether they are included in the review.
-5. Load relevant project guidance files before reviewing. Prefer files such as `AGENTS.md`, `.cursor/rules/*`, `CONTRIBUTING.md`, repo-specific agent guides, or guidance files near changed paths.
-6. Prefer an isolated first-pass review by spawning a separate child agent before doing any main-thread review synthesis. Give that child agent the branch name, base branch, diff stat, changed files, commits, relevant guidance, PR title/body if available, and the branch diff or a way to inspect it. Do not fork the full conversation context unless the review would otherwise lack required facts. The goal is to reduce bias from earlier discussion and implementation context.
-7. Have the child agent run this same `$code-review` workflow against the branch diff and return only actionable findings with file and line references plus a brief note if no significant issues were found.
-8. Review only changes introduced by the branch. Use surrounding and related code as context, but do not flag unrelated pre-existing problems.
-9. Perform the review passes below. The main agent should use the isolated child-agent output as the starting point, then do any targeted follow-up checks needed to confirm or dismiss findings.
-10. Score candidate findings with the confidence rubric.
-11. Report findings with confidence score >= 70. If none meet the threshold, say no significant issues were found and mention the main areas checked.
+## Inputs
 
-## Review Passes
+- Head and base refs plus final head SHA.
+- Changed files, commits, and whether uncommitted changes are included.
+- Brief, accepted plan, episode state, and relevant finding dispositions when part of Kickoff.
+- Applicable repository instructions and PR title/body when available.
 
-### Project Guidance Compliance
+Stop if the diff is empty, the base cannot be determined, or unrelated staged changes make the review boundary unsafe.
 
-- Verify changed code follows relevant project instructions.
-- Only flag violations that are specific and applicable to the changed files.
-- Cite the guidance file when it directly supports a finding.
+## Reviewer Selection
 
-### Bug And Logic Scan
+Use an isolated reviewer when the diff has material ambiguity, blast radius, consequence, irreversibility, novelty, or coordination cost. Assess those dimensions in the change's own domain—including user experience, visual systems, accessibility, compatibility, performance, data/security, and delivery—not by a backend-only checklist. For a tiny low-risk diff, a focused orchestrator review is sufficient unless repository policy requires independence.
 
-- Check typos, wrong variables, missing returns, copy-paste errors, and inverted conditions.
-- Trace conditionals and loops with concrete inputs.
-- For state machines, parsers, regexes, migrations, serializers, auth flows, and data transformations, verify downstream assumptions match produced values.
-- For regex or parser changes, test at least a happy path, an edge case, and malformed input.
+Seed an isolated reviewer with the diff and durable artifacts, not the implementation conversation.
 
-### Failure Mode Analysis
+## Passes
 
-- Check async rejection handling, timeouts, retries, unexpected responses, null values, empty collections, malformed data, and boundary values.
-- Check resource acquisition and release paths.
-- Ask what input or environment condition would break the changed code.
+1. Repository-policy and accepted-plan compliance.
+2. Concrete behavior, interaction, logic, and state-transition tracing.
+3. Failure modes relevant to the product: empty/loading/error/offline/boundary states, interruption, partial failure, and cleanup.
+4. Accessibility, user trust, security, privacy, and integrity boundaries.
+5. Consumer, platform, browser/device, visual-system, and rollout compatibility where relevant.
+6. Tests for consequential new behavior and regressions.
 
-### Related Code And History
+Use history or sibling code only when it clarifies an introduced invariant. Verify findings before reporting them.
 
-- Inspect sibling files and existing patterns that the change should match.
-- Use `git blame` and recent file history when historical context could explain an invariant or regression.
-- Check whether behavior expected by callers, tests, routes, workers, or UI consumers changed accidentally.
+## Findings
 
-### Comment And Documentation Compliance
+Report only findings with confidence at least 70/100:
 
-- Read comments, TODOs, FIXMEs, docs, and type/interface contracts near changed code.
-- Flag changed behavior that contradicts nearby documented expectations.
+- `P0`: critical safety, security, privacy, data-loss, user-harm, or widespread release-breaking defect.
+- `P1`: high-confidence serious bug or required-policy violation.
+- `P2`: meaningful edge case or missing risky validation that should normally be fixed.
+- `P3`: non-blocking improvement; omit unless the caller explicitly requests nits.
 
-### Test Coverage Gaps
+Give every finding a stable ID such as `CR-001`. Do not split one root cause into several findings.
 
-- Check whether new paths, branches, edge cases, error paths, and parsing variations have meaningful tests.
-- Flag missing tests when the untested behavior is risky or likely to regress.
+## Output
 
-## Confidence Rubric
+```markdown
+# Code Review
+- Head/base/SHA:
+- Files reviewed:
+- Independent reviewer: yes | no
+- Started/completed at:
 
-Score each candidate finding from 0 to 100:
+## Findings
+| ID | Priority | Confidence | File:line | Evidence and impact | Suggested fix |
+| --- | --- | --- | --- | --- | --- |
 
-- `0`: Not confident. Likely false positive, pre-existing issue, or unsupported by evidence.
-- `25`: Somewhat confident. Plausible but not verified, or mostly stylistic without project guidance.
-- `50`: Moderately confident. Real issue, but low impact, rare, or partially speculative.
-- `75`: Highly confident. Verified likely issue that can be hit in practice and should be fixed.
-- `100`: Certain. Direct evidence confirms a frequent or severe issue.
+## Coverage Checked
+- <areas checked>
+```
 
-For project-guidance findings, verify the cited guidance actually requires the behavior.
-
-## Do Not Flag
-
-- Pre-existing issues not introduced by the reviewed branch.
-- Issues on unrelated lines unless the branch makes them newly reachable.
-- Findings already caught trivially by formatters, linters, typecheckers, or compilers.
-- General style preferences unless explicitly required by project guidance.
-- Intentional behavior changes that match the broader change.
-- Suppressed lint warnings when the suppression is intentional and allowed by project guidance.
-
-## Flag Even If Small
-
-- Unhandled async errors or promise rejections.
-- Missing guards for null, undefined, empty, malformed, or boundary inputs.
-- Incorrect parser or regex capture group usage.
-- Resource leaks on error paths.
-- Security regressions in auth, permissions, secrets, validation, redirects, uploads, injection boundaries, or tenant isolation.
-- Missing tests for risky new branches or error paths.
-
-## Report Format
-
-Lead with findings ordered by severity. Include branch, base, changed file count, issue location, reason, and suggested fix. Use short snippets only when they make a finding clearer.
-
-If no issues meet the threshold, report that no significant issues were found and list the main areas checked.
-
-## Isolation Preference
-
-- Default to a child-agent first pass whenever delegation is available and the user has not asked to avoid subagents.
-- Seed that child agent with review inputs, not the whole implementation conversation.
-- Preferred inputs: branch name, base branch, commit list, changed files, diff stat, PR title/body, relevant guidance files, and the diff itself or commands to inspect it.
-- If a fully isolated pass is not possible, state that clearly in the review output and proceed with the best local review available.
+If no finding qualifies, say so and list the risky areas checked. The caller records dispositions in episode state and repeats review only after material logic changes.

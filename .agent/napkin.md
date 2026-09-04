@@ -1,15 +1,11 @@
 # Napkin
 
-_Last reconciled: 2026-08-20_
+_Last reconciled: 2026-09-04_
 
 ## User preferences
 
-- Keep reusable skills portable across repositories and teammates.
-
 ## Working rules
 
-- Validate changed skills with the repository validator before pushing.
+- Validate published skills with this repository's validator because its supported versioned frontmatter is stricter than the generic system validator.
 
 ## Unresolved traps
-
-- Keep product-specific behavior out of shared skills; require target-repository discovery instead.

@@ -11,14 +11,14 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 
 | Skill | Purpose |
 | --- | --- |
-| `kickoff` | Orchestrate delegated planning, review, implementation, and delivery. |
+| `kickoff` | Orchestrate proportionate planning, review, implementation, monitored delivery, and verified closeout. |
 | `task-master` | Turn roadmaps into executable, verifiable delivery tickets and coordinate their progress. |
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
-| `simplicity-review` | Apply Ponytail's simplicity ladder to plans while preserving repository constraints and required safeguards. |
-| `plan-it` | Delegate full Lavish or fast Markdown implementation planning to a configured worker. |
-| `ship-it` | Execute a reviewed plan with Ponytail-governed implementation and diff simplification before normal code review. |
-| `code-review` | Review local branch changes before opening or updating a PR. |
-| `create-pr` | Prepare and create a GitHub pull request from local changes. |
+| `simplicity-review` | Force plans through delete, reuse, and compress passes while preserving required outcomes and safeguards. |
+| `plan-it` | Create proportionate, evidence-backed plans inline for tiny work or through a configured worker for fast/full work. |
+| `ship-it` | Execute accepted plans through validation, dedicated Ponytail and correctness reviews, monitored PR delivery, and closeout. |
+| `code-review` | Run the correctness-focused implementation review after the dedicated Ponytail complexity pass. |
+| `create-pr` | Verify the intended target, create or update the PR, and establish active review monitoring. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 | `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |
 | `design-to-code` | Implement and refine interfaces from Aphrodite evidence through project audit, clarification, and render/compare iteration. |

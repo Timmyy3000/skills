@@ -56,7 +56,7 @@ If the harness cannot spawn workers, stop during kickoff and ask the user to use
 Dispatch one fresh planning worker with the smallest complete context:
 
 - `plan-it` skill and this reference.
-- Planning mode: `full` or `fast`.
+- Planning mode: `tiny`, `fast`, or `full`; tiny reaches a worker only when explicitly delegated or repository policy requires it.
 - Work type, objective, requirements, acceptance criteria, constraints, timeline, risks, and open questions.
 - Work brief and task-workspace paths.
 - Worktree path and repository instructions.
@@ -67,7 +67,7 @@ Tell the worker to inspect the repository and cited evidence before planning. It
 
 ## Artifact And Result Contract
 
-For `full`, create and open the Lavish artifact required by `plan-it` and satisfy the Full Plan Content Standard. For `fast`, create a concise Markdown plan in the brief or the repository's established sibling plan location and satisfy the smaller Fast Plan Content Standard.
+For `full`, create and open the Lavish artifact required by `plan-it`. For `fast`, create a concise Markdown plan in the brief or the repository's established sibling plan location. For an explicitly delegated `tiny` plan, write only the inline objective, affected surface, 1–3 steps, acceptance checks, and rollback required by `plan-it`.
 
 Return:
 
@@ -82,7 +82,7 @@ Return:
 
 - Plan: <absolute path>
 - Work brief updated: <absolute path or no>
-- Artifact type: <Lavish HTML / Markdown>
+- Artifact type: <Lavish HTML / Markdown / Inline Markdown>
 
 ## Evidence Inspected
 
