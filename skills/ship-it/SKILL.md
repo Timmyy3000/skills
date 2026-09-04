@@ -1,175 +1,93 @@
 ---
 name: ship-it
-description: Execute a defined product or engineering problem from an accepted full or fast-path plan through implementation, pull request readiness, and review monitoring. Use when the user says "Ship it," asks to execute an agreed plan, or arrives from $kickoff with implementation delegation set to never, auto, or always. Support harness-agnostic worker configuration and delegated implementation without changing independent plan-review behavior.
-version: 0.2.0
+description: Execute an accepted engineering plan through implementation, integrated validation, code review, pull request creation, active review monitoring, and verified closeout. Use after Kickoff approval/review or when the user explicitly asks to ship an existing plan.
+version: 0.5.0
 ---
 
 # Ship It
 
-Take a reviewed plan from execution handoff through implementation, local review, pull request creation, and review monitoring. Keep the current agent as orchestrator and use implementation workers only when the resolved delegation preference permits them.
-
-## Dependency Check
-
-Before execution, verify that `ponytail` and `ponytail-review` are available.
-Accept host-namespaced equivalents such as `ponytail:ponytail` and
-`ponytail:ponytail-review`. If either capability is missing, stop and suggest:
-
-```powershell
-npx skills add DietrichGebert/ponytail --skill ponytail --skill ponytail-review
-```
-
-A host plugin that already exposes both skills satisfies this dependency.
+Own execution from an accepted plan to a recorded terminal delivery state. Do not reopen settled product decisions unless new repository evidence creates a material conflict.
 
 ## Required Handoff
 
-Read and preserve these inputs when `kickoff` provides them:
+Read the accepted plan, brief, episode state, finding dispositions, worktree, intended base branch and delivery path, validation expectations, and implementation-delegation decision. If any disagree, stop and reconcile the durable artifacts before editing.
 
-- Accepted Lavish plan or reviewed fast-path Markdown plan.
-- Work brief and task-workspace path.
-- Adversarial and simplicity review decisions.
-- Worktree manager, branch, and worktree path.
-- Planning mode.
-- Implementation delegation: `never`, `auto`, or `always`.
-- Delegation source: task choice, repository default, or fallback default.
-- Repository `kickoff.yaml` path when present.
-- Validation expectations, risks, and open questions.
+After compaction or interruption, recover from the episode state and current Git/PR state. Do not reconstruct the task from chat memory.
 
-If invoked directly, find the existing brief and plan. If no executable plan exists, create a proportionate plan before implementation: route substantial, ambiguous, or risky work through the full planning and review workflow; allow a concise Markdown plan for small, clear, low-risk work. Do not replace a reviewed fast-path plan with HTML merely because this skill was invoked.
+If the user corrects scope, architecture, branch target, validation, monitoring, or closeout during execution, record the correction in episode state before continuing. Reconcile the brief or plan when affected, invalidate only the stale validation/review phases, and never make the user repeat the decision.
+
+## Implementation Delegation
+
+Resolve `never`, `auto`, or `always` from explicit task choice, saved repository default, then workflow default. Configure `ship_it.workers.<harness>` only when a worker will be used.
+
+When `auto` selects workers or the mode is `always`, read [references/delegation.md](references/delegation.md) for selector bootstrap, execution manifests, bounded dispatch, integration, and temporary-artifact cleanup.
+
+- `never`: implement in the orchestrator.
+- `auto`: delegate only when bounded non-overlapping work saves more time than packet/integration cost.
+- `always`: delegate at least one bounded task or stop if the configured worker is unavailable.
+
+Workers receive paths to the brief, plan, episode state, findings, repository instructions, and a small execution manifest. Never send the full conversation. The orchestrator owns shared schemas, sequencing, integration, and final validation.
 
 ## Workflow
 
-### 1. Confirm The Execution Contract
+1. Verify worktree, branch, base, and dirty state. Preserve unrelated work.
+2. Map implementation steps to accepted plan items and finding IDs.
+3. Implement the smallest compliant change, using test-first work when practical.
+4. Inspect every worker diff and reject scope expansion.
+5. Run targeted checks during implementation and integrated repository/acceptance validation at the final head SHA.
+6. Run a dedicated `ponytail-review` on the complete implementation diff, then run the separate correctness-focused `code-review`. Both passes are required for every non-empty implementation diff.
+7. Apply or explicitly disposition every Ponytail finding. Resolve P0/P1 code-review findings; resolve or explicitly disposition P2 findings. Update episode state.
+8. For a PR delivery path, invoke `create-pr` with the intended base, accepted artifacts, final validation, risks, and monitor requirement. For an explicitly authorized direct path, use the direct-delivery contract below.
+9. Verify that the returned delivery record matches the intended local/remote refs and contains the applicable monitor evidence or a concrete blocker.
+10. Continue the review loop until terminal state, then perform closeout.
 
-- Read the plan, brief, accepted review findings, repository instructions, and relevant source evidence.
-- Confirm that requirements, acceptance criteria, scope, validation, and unresolved risks are executable.
-- Do not reopen settled planning decisions unless repository evidence reveals a material conflict.
+## Two-Pass Implementation Review
 
-### 2. Prepare The Repository
+Keep the passes separate so neither objective is diluted:
 
-- Continue inside the kickoff-provided worktree when one exists.
-- When Forest manages the worktree, use Forest status and mark commands; do not manually rewrite or remove Forest state.
-- Inspect the branch and working tree and preserve unrelated user changes.
-- Create a feature branch by repository convention only when kickoff did not already create one.
-- Keep all implementation, worker coordination, integration, and validation in the same task worktree.
+1. `ponytail-review` receives the final diff, brief, accepted plan, and repository instructions—not the full conversation. It reviews only for removable code, duplicated paths, reinvention, speculative abstraction or flexibility, unnecessary dependencies, and opportunities to shrink. Preserve requirements and safeguards. Record its output and estimated net removable lines in episode state.
+2. `code-review` reviews the same head SHA for correctness, behavior, regression, accessibility, security/privacy, compatibility, reliability, and test coverage. It must not treat the Ponytail pass as correctness evidence.
 
-### 3. Resolve Implementation Delegation
+If Ponytail finds nothing, record `Lean already. Ship.` If it finds something, apply it or record a concrete reason the machinery is required. Re-run the affected validation after changes. Re-run both passes when the implementation changes materially; do not repeat them for comments, formatting, or metadata-only edits.
 
-Treat implementation delegation as separate from adversarial and simplicity review. It controls only workers used to execute the accepted plan.
+If `ponytail-review` is unavailable, record phase `code-review`, status `blocked`, and the missing capability as the blocking condition rather than silently folding simplicity into the normal code review.
 
-Resolve the mode in this order when kickoff did not already provide it:
+## Direct Delivery Contract
 
-1. Explicit task-specific user choice.
-2. Saved `implementation_delegation_default` in the discovered repo-level `kickoff.yaml`.
-3. `always`.
+Use a no-PR path only when the user's current instruction explicitly authorizes it and repository policy permits it. Reconfirm the target branch, remote, exact commit set, current-head validation, and both review dispositions immediately before delivery. Deliver without rewriting shared history, then read back the remote target SHA and any required CI, deployment, or promotion state. Record status `delivered-direct` only when the intended remote state is verified; otherwise record status `blocked` with the exact mismatch or external condition.
 
-When a direct `ship-it` invocation contains an explicit lasting instruction, persist it in `kickoff.yaml` using kickoff's folder and preservation rules before resolving the task.
+Do not invoke `create-pr` for direct delivery. Establish a branch or deployment monitor only when the delivery contract requires one and the available automation can observe the relevant state. After direct integration is verified, use the same Forest close-or-retain decision described in Closeout.
 
-Apply the modes as follows:
+## Atomic PR And Monitor Gate
 
-- `never`: spawn no implementation workers. Execute in the current orchestrator.
-- `auto`: lean toward workers when at least one bounded task can run independently without creating file or dependency conflicts. Actively look for multiple dependency-ready lanes before settling on a single packet. Record the decision and rationale.
-- `always`: delegate at least one bounded implementation task. Do not silently fall back to orchestrator-only execution when workers are unavailable.
+PR creation is incomplete until all are recorded:
 
-Accept legacy `solo` as `never` and `subagents` as `always`, but write only current values.
+- PR URL and number;
+- head/base branches and head SHA;
+- initial mergeability/check state;
+- `monitor_status: active` and monitor ID, or `blocked` with exact reason;
+- terminal condition.
 
-Read [references/delegation.md](references/delegation.md) completely when `auto` selects workers or the mode is `always`. Harness-native worker selectors live under `ship_it.workers` in that same `kickoff.yaml`. Do not create worker configuration when the resolved path does not use workers.
+If the user asks “are you monitoring?”, verify the live automation record. Do not answer from intention, a todo list, or a previous one-time poll.
 
-### 4. Decompose And Implement
+For actionable review or CI feedback, confirm it applies to the current head, make only an authorized scoped fix, validate, push, update the state, and keep monitoring. Never merge without explicit permission.
 
-Keep the current agent responsible for orchestration, dependency ordering, shared decisions, integration, and final validation.
+## Delivery States
 
-Before any implementation edit, every executor must invoke the `ponytail` skill
-at `full` intensity. This applies to the current orchestrator in `never` mode
-and to every delegated implementation worker in `auto` or `always` mode. Record
-the previous Ponytail mode when the host exposes it so it can be restored before
-normal code review.
+- `ready-to-merge`: current head is mergeable, required checks/reviews pass or are intentionally absent, and no actionable findings remain. This is terminal only when the accepted delivery path ends at PR readiness; for a Forest-backed episode being followed through merge, it is a milestone and monitoring continues quietly.
+- `merged`: merge and final SHA are verified; the episode becomes terminal after required Forest close-or-retain disposition and other closeout evidence are recorded.
+- `delivered-direct`: the explicitly authorized remote target and final SHA are verified without a PR, with required delivery monitoring and closeout complete.
+- `canceled`: user or repository owner explicitly canceled the work.
+- `blocked-external`: a concrete external condition prevents progress and is recorded with the required next actor/action.
 
-Ponytail governs implementation economy only. The accepted plan, explicit
-requirements, repository policies, correctness, security, data integrity,
-accessibility, compatibility, accepted review safeguards, and required
-validation take precedence. Ponytail must not reopen settled scope or remove
-protected complexity.
+An open PR with pending checks is not terminal.
 
-For orchestrator-only execution:
+## Closeout
 
-- Activate Ponytail Full before editing and keep it active through integration.
-- Maintain a short phase list mapped to the accepted plan.
-- Implement each behavior with Red/Green TDD when practical.
-- Run the smallest useful validation after each meaningful phase.
+Record final validation, PR state, deployment/promotion state when applicable, unresolved limitations, durable artifact locations, task-record reconciliation, temporary artifact cleanup, and worktree disposition.
 
-For delegated execution:
+Close a Forest worktree only through Forest and only when integration is proven or the user/repository policy authorizes closure. A squash merge may require explicit remote evidence; do not mistake ancestry mismatch for unmerged work.
 
-- Follow the worker discovery, configuration, manifest, dispatch, and integration contract in `references/delegation.md`.
-- Include the `ponytail` skill and `full` intensity in every implementation packet; require the worker to confirm activation before editing.
-- Prefer multiple workers when the accepted plan contains genuinely independent, non-overlapping workstreams that can be reconciled through explicit contracts. Use dependency-aware waves when later packets depend on shared foundations.
-- Create bounded work packets with explicit dependencies, file ownership, acceptance criteria, and validation.
-- Dispatch only dependency-ready tasks. Run independent tasks in parallel and coupled tasks in sequential waves.
-- Keep shared schemas, migrations, central configuration, architectural changes, and final integration with the orchestrator unless ownership is unambiguous.
-- Review every worker result and patch before accepting it.
+When a merge is verified and the Forest worktree still exists, inspect its Forest and Git status, then ask the user whether to close it. On approval, refuse closure if uncommitted or unpushed work remains; otherwise run `forest close` for the resolved worktree, verify its removal with Forest status, and record the evidence. If the user chooses to keep it, record `retained` so it is an intentional exception rather than forgotten cleanup. Do not issue the final closeout while the choice is still pending.
 
-For both paths:
-
-- Start each meaningful behavior change with a failing test when practical.
-- Implement the smallest change that makes the test pass, then refactor only while green.
-- If test-first work is impractical, record why and use the smallest equivalent pre-change validation.
-- Commit focused intentional changes frequently by repository convention.
-- Never stage unrelated files.
-- Mark meaningful Forest phase transitions when Forest is available.
-
-### 5. Validate The Integrated Result
-
-- Run repository-required formatting, linting, type checks, tests, builds, and coverage checks.
-- Run task-specific acceptance and regression validation from the plan.
-- Re-run relevant checks after worker integration, even when workers reported them as passing.
-- Record any validation that could not run and the exact reason.
-- Invoke `ponytail-review` once on the complete integrated diff before normal code review. Treat it as an over-engineering review only, not a correctness or security review.
-- Record every Ponytail finding as accepted or rejected against the plan, requirements, repository policy, and protected complexity. Never apply its findings automatically.
-- Apply accepted simplifications, rerun affected validation, and repeat the Ponytail review only when those edits materially restructure the diff; do not create a cosmetic review loop.
-- Restore the executor's previous Ponytail mode when known, otherwise deactivate it, before invoking normal code review.
-- Invoke `code-review` before PR creation and resolve actionable blocking findings.
-
-### 6. Open The Pull Request
-
-- Invoke `create-pr` and follow its instructions completely.
-- Target the repository's normal integration branch.
-- Link implementation to the accepted plan and work brief.
-- Report tests, delegated work when relevant, risks, rollout, and unresolved limitations.
-
-### 7. Monitor Review
-
-- Create or update a 5-minute PR monitor.
-- Watch code review bot feedback, security review, CI, mergeability, and human comments.
-- For actionable feedback, apply a scoped fix, validate, commit, push, and continue monitoring.
-- Do not merge unless the user explicitly asks.
-
-### 8. Finish And Clean Up
-
-- Finish only when the PR is ready to merge, merged, explicitly canceled, or blocked by a concrete external condition.
-- Report the PR URL, current status, validation, delegated-task outcome, and remaining blockers.
-- Preserve durable plans, decisions, repository worker defaults, and required native worker profiles.
-- Clean up only temporary coordination artifacts clearly created by this workflow, following the ownership and safety rules in `references/delegation.md`.
-- Never remove a Forest worktree directly; use `forest close` only when the user asks or integration is proven and repository policy permits cleanup.
-
-## Rules
-
-- Default implementation delegation to `always` when kickoff supplies no explicit or saved preference.
-- Never spawn implementation workers only when the user selected `never`/no subagents for the task or explicitly saved that repository default.
-- Never treat implementation delegation as permission to skip independent plan reviews.
-- Never let Ponytail override the accepted execution contract or replace normal correctness and security review.
-- Never persist an orchestrator model; the orchestrator is the current agent session.
-- Never hardcode Codex, Claude Code, OpenCode, or provider-specific model names into the portable workflow.
-- Never silently substitute or override a configured worker selector.
-- Never let parallel workers own overlapping files or unresolved shared dependencies.
-- Do not implement large work directly on `dev` or `main`.
-- Do not abandon a kickoff-provided worktree.
-- Do not batch all work into one large commit.
-- Do not merge without explicit user approval.
-- Do not finish merely because the PR exists.
-
-## Create-PR Handoff
-
-When ready to open the PR, invoke the local `create-pr` skill and provide the accepted plan, work brief, validation evidence, known risks, and implementation-delegation summary.
-
-## Automation Handoff
-
-After PR creation, create or update a monitor with a 5-minute cadence. Stop monitoring only when the PR is clear, ready, merged, explicitly canceled, or blocked by a concrete external condition.
+Return a compact final report from the episode state. Do not leave a monitor running after the episode's actual terminal condition. A merged PR with a pending Forest close-or-retain decision is not yet terminal; after that decision is recorded, stop the monitor unless the user explicitly requested further monitoring.

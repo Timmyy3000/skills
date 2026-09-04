@@ -2,6 +2,19 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## 0.5.0 - 2026-09-04
+
+### Changed
+
+- Reworked Kickoff around compact episode state, proportionate investigation/tiny/fast/full routes, durable correction handling, and recovery after context compaction.
+- Made route selection domain-neutral across product experience, accessibility, compatibility, performance, data/security, delivery, and operations.
+- Tightened Plan It and both independent plan reviews to avoid redundant discovery, revise by stable finding IDs, and match planning effort to demonstrated complexity.
+- Strengthened Simplicity Review with explicit delete, reuse, and compress passes plus a measurable complexity delta and mandatory finding reconciliation.
+- Required a dedicated Ponytail implementation-diff review before the separate correctness-focused Code Review.
+- Made PR creation and five-minute monitoring one verified handoff, with explicit head/base checks, live monitor evidence, and terminal delivery states.
+- Added post-merge Forest cleanup: ask once whether to close or retain the exact worktree, refuse unsafe closure, and verify successful `forest close` cleanup.
+- Bumped `kickoff`, its six downstream workflow skills, and the repository release to 0.5.0.
+
 ## 0.4.0 - 2026-08-29
 
 ### Changed

@@ -1,4 +1,4 @@
 interface:
   display_name: "Plan It"
-  short_description: "Delegate full or fast implementation planning"
-  default_prompt: "Use $plan-it to create this implementation plan through the configured planning worker."
+  short_description: "Create proportionate, evidence-backed plans"
+  default_prompt: "Use $plan-it to create the smallest executable implementation plan that fits this task's evidence and risk."

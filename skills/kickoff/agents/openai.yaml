@@ -1,4 +1,4 @@
 interface:
   display_name: "Kickoff"
-  short_description: "Start a full or fast engineering workflow"
-  default_prompt: "Use /kickoff to orchestrate delegated planning, review, implementation, and delivery with the configured workers."
+  short_description: "Orchestrate proportionate delivery to closeout"
+  default_prompt: "Use $kickoff to take this engineering task through proportionate planning, review, implementation, monitored delivery, and verified closeout."
