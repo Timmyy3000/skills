@@ -54,7 +54,7 @@ Create or update one PR with repository-required sections plus:
 - rollout/rollback and known limitations;
 - delegated-work summary when relevant.
 
-After creation, read the live PR and verify URL, number, head, base, head SHA, mergeability, and initial checks. If head/base is wrong, correct it when the intended target is unambiguous and safe; otherwise stop for the owner decision.
+After creation, read the live PR and verify repository, URL, number, head branch and SHA, base branch, mergeability, and initial checks. When later relying on a merged PR as integration evidence, match its repository, number, head SHA, base branch, and merged state to the worktree; prove any additional commits separately. A missing or deleted upstream tracking ref alone does not prove unpublished work, while exact merged PR head evidence can establish publication; a similarly named or stale PR or unmatched commit remains unverified and cannot bypass Forest safeguards. If head/base is wrong, correct it when the intended target is unambiguous and safe; otherwise stop for the owner decision.
 
 ## Monitor Creation
 
@@ -67,8 +67,8 @@ When automation is available and monitoring is required, create or update a five
 - after any material implementation fix, rerun affected validation and the applicable combined or separate review mode from `ship-it` against the new head; reassess risk and disposition findings before reporting readiness;
 - never merge without explicit permission;
 - notify once at `ready-to-merge`, then continue quietly when a Forest worktree must be followed through merge;
-- on verified merge, resolve and record an applicable explicit task or saved user close-or-retain instruction; ask once in the owner task only when none applies, then stay quiet while the answer is pending;
-- close only with applicable user authorization, verified integration, and no uncommitted or unpushed work, using `forest close` and verifying the result; stop at `ready-to-merge` when the accepted delivery path ends there, at verified `merged` when no cleanup decision remains, after a Forest close/retain result when that cleanup is tracked, or at `canceled` or `blocked-external`.
+- on verified merge, re-inspect the exact Forest worktree and current owner, then resolve and record the latest applicable explicit task or saved user close-or-retain decision and source; ask once in the owner task only when none applies, then stay quiet while the answer is pending;
+- hand Forest closeout to Ship-it's closeout contract, including three-surface verification and `closure-blocked` retention on partial or unverified results; keep the applicable monitor for a temporary-retention revisit until its trigger or an explicit handoff to a named owner/follow-up; stop at `ready-to-merge` when the accepted delivery path ends there, at verified `merged` when no cleanup decision remains, after a Forest close or retain result with no pending revisit when that cleanup is tracked, or at `canceled` or `blocked-external`.
 
 Read the created automation back when supported. A planned monitor, todo item, or one-time status check does not satisfy this gate.
 
