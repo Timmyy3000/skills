@@ -67,6 +67,7 @@ Create one file per delivery episode. Keep it compact enough to read after every
 - Forest worktree: not-applicable | present | closed | retained | closure-blocked
 - Cleanup authorization source:
 - Exact worktree owner at closeout:
+- Live-use check/result (owner task and associated terminals/processes):
 - Temporary retention owner:
 - Retention revisit trigger: review/testing complete | merge | other
 - Retention revisit handoff: named owner/follow-up or authorized monitor
