@@ -1,4 +1,4 @@
 interface:
   display_name: "Ship it"
-  short_description: "Ship through dual review and monitored closeout"
-  default_prompt: "Use $ship-it to execute this accepted plan through validation, Ponytail and correctness reviews, monitored PR delivery, and closeout."
+  short_description: "Ship through proportionate review and closeout"
+  default_prompt: "Use $ship-it to execute this accepted plan through validation, proportionate simplicity and correctness review, authorized delivery, and verified closeout."

@@ -2,6 +2,25 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## 0.6.0 - 2026-09-05
+
+### Changed
+
+- Aligned workflow entrypoints with explicit scope, existing authorization, and
+  read-only requests, including generated state and knowledge records.
+- Made the recorded HTML requirement govern full planning, worker handoffs,
+  acceptance, and archiving consistently.
+- Allowed one combined simplicity/correctness review for tiny low-risk diffs;
+  retained separate reviews and engineering safeguards for other changes.
+- Preserved prior cleanup authorization across shipping and PR monitors and
+  distinguished optional monitoring from a failed required monitor.
+- Made implementation delegation default explicitly to auto, subject to user
+  and harness restrictions, while preserving configured worker selections.
+- Reused accepted UI requirements before asking design-to-code questions and
+  allowed independent work to continue while a dependent design region is blocked.
+- Released the seven delivery workflow skills at 0.6.0 and design-to-code,
+  grill-to-spec, and task-master at 0.2.0; unchanged skills retain their individual versions.
+
 ## 0.5.0 - 2026-09-04
 
 ### Changed

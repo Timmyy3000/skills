@@ -17,6 +17,7 @@ Create one file per delivery episode. Keep it compact enough to read after every
 - Delivery path:
 - Brief:
 - Plan:
+- HTML required and reason:
 
 ## Current State
 - Phase: intake | planning | plan-review | approval | implementation | code-review | pr-creation | monitoring | closeout | terminal
@@ -36,6 +37,10 @@ Create one file per delivery episode. Keep it compact enough to read after every
 ## Evidence Index
 | Evidence | Path or URL | Why it matters |
 | --- | --- | --- |
+
+## Review Mode
+- Combined or separate:
+- Risk and policy basis:
 
 ## Review Findings
 | ID | Review | Severity | Disposition | Plan revision |
@@ -59,6 +64,7 @@ Create one file per delivery episode. Keep it compact enough to read after every
 ## Closeout
 - Deployment/promotion:
 - Forest worktree: not-applicable | present | closed | retained | closure-blocked
+- Cleanup authorization source:
 - Post-merge worktree choice: not-applicable | pending | close | retain
 - Forest closure evidence:
 - Worktree disposition:

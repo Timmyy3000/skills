@@ -1,12 +1,26 @@
 ---
 name: plan-it
 description: Create or revise proportionate implementation plans, using inline planning for tiny work and a configured planning worker for fast/full work. Use standalone or when Kickoff delegates planning; produce concise Markdown or a full human-review artifact as warranted.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Plan It
 
 Produce the smallest executable plan that covers the current objective and demonstrated risks. Durable artifacts and the Kickoff episode state are the source of truth; conversation history is not.
+
+## Scope and authorization
+
+Honor explicit user scope and applicable prior authorization over workflow
+defaults. Continue authorized preparation and reversible work using established
+conventions; ask only for material unresolved decisions or authority not already
+given. Preserve engineering safeguards and access controls. If a skill blocks
+progress, identify the exact instruction and concrete conflict, and continue
+independent authorized work.
+
+For a read-only or no-change request, return findings in chat without creating or
+updating plans, state, memory, configuration, or knowledge records unless those
+writes are explicitly authorized. Preserve current user corrections over stale
+artifacts, updating those artifacts only when writes are in scope.
 
 ## Required Inputs
 
@@ -41,7 +55,7 @@ Create one concise Markdown plan. Include scope, simplest viable approach, affec
 
 ### Full
 
-Create the repository-required Markdown plan and, when human visual review adds value, a Lavish artifact. Cover the relevant product behavior, experience and accessibility, technical structure, sequencing, boundaries, adoption or rollout, risk, rollback, and concrete validation. HTML and Markdown must agree; do not maintain two divergent plans.
+Create the repository-required Markdown plan. Record `HTML required: yes | no` from the user request, applicable repository policy, and whether visual review adds value. Create a Lavish artifact only when that recorded choice is yes; pass the choice unchanged through worker handoffs and acceptance. Cover the relevant product behavior, experience and accessibility, technical structure, sequencing, boundaries, adoption or rollout, risk, rollback, and concrete validation. HTML and Markdown must agree; do not maintain two divergent plans.
 
 ## Planning Method
 
@@ -70,6 +84,7 @@ Return:
 - Status: Ready | Needs input | Blocked
 - Route:
 - Plan path:
+- HTML required: yes | no
 - Episode state updated: yes | no
 - Evidence newly inspected:
 - Decisions added or changed:

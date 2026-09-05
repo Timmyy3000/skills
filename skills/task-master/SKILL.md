@@ -1,7 +1,7 @@
 ---
 name: task-master
 description: Create and maintain a lightweight file-based delivery board made of milestones, epics, and executable tickets. Use when the user invokes /task-master or asks Codex to break a project into trackable work, set up or update an epic tracker, select the next ticket, coordinate agents, plan safe parallel work, resume an ongoing project, or verify progress toward an MVP or release.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Task Master
@@ -13,7 +13,10 @@ Keep the board small, current, and based on observable outcomes. Treat Task
 Master as the coordination layer; let specialized skills own planning,
 implementation, review, and pull-request mechanics.
 
-Do not start implementation unless the user's request authorizes it.
+Do not start implementation unless the user's request authorizes it. For an
+explicit read-only or no-change request, inspect and report board discrepancies
+in chat without updating the board, memory, or knowledge records. Existing
+user authorization and current corrections take precedence over workflow defaults.
 
 ## Operations
 

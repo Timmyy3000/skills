@@ -1,12 +1,26 @@
 ---
 name: ship-it
 description: Execute an accepted engineering plan through implementation, integrated validation, code review, pull request creation, active review monitoring, and verified closeout. Use after Kickoff approval/review or when the user explicitly asks to ship an existing plan.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Ship It
 
 Own execution from an accepted plan to a recorded terminal delivery state. Do not reopen settled product decisions unless new repository evidence creates a material conflict.
+
+## Scope and authorization
+
+Honor explicit user scope and applicable prior authorization over workflow
+defaults. Continue authorized preparation and reversible work using established
+conventions; ask only for material unresolved decisions or authority not already
+given. Preserve engineering safeguards and access controls. If a skill blocks
+progress, identify the exact instruction and concrete conflict, and continue
+independent authorized work.
+
+For a read-only or no-change request, return findings in chat without creating or
+updating plans, state, memory, configuration, or knowledge records unless those
+writes are explicitly authorized. Preserve current user corrections over stale
+artifacts, updating those artifacts only when writes are in scope.
 
 ## Required Handoff
 
@@ -18,7 +32,7 @@ If the user corrects scope, architecture, branch target, validation, monitoring,
 
 ## Implementation Delegation
 
-Resolve `never`, `auto`, or `always` from explicit task choice, saved repository default, then workflow default. Configure `ship_it.workers.<harness>` only when a worker will be used.
+Resolve `never`, `auto`, or `always` from explicit task choice, saved repository default, then `auto`. The default applies only when the active harness permits delegation; explicit user or harness restrictions take precedence. Configure `ship_it.workers.<harness>` only when a worker will be used.
 
 When `auto` selects workers or the mode is `always`, read [references/delegation.md](references/delegation.md) for selector bootstrap, execution manifests, bounded dispatch, integration, and temporary-artifact cleanup.
 
@@ -34,27 +48,34 @@ Workers receive paths to the brief, plan, episode state, findings, repository in
 2. Map implementation steps to accepted plan items and finding IDs.
 3. Implement the smallest compliant change, using test-first work when practical.
 4. Inspect every worker diff and reject scope expansion.
-5. Run targeted checks during implementation and integrated repository/acceptance validation at the final head SHA.
-6. Run a dedicated `ponytail-review` on the complete implementation diff, then run the separate correctness-focused `code-review`. Both passes are required for every non-empty implementation diff.
-7. Apply or explicitly disposition every Ponytail finding. Resolve P0/P1 code-review findings; resolve or explicitly disposition P2 findings. Update episode state.
+5. Run targeted checks during implementation and integrated repository/acceptance validation at the final head SHA. Reuse evidence for unchanged content and environment; repeat affected checks after fixes or integration, not merely because a new workflow stage starts.
+6. Select and record the review mode below. Tiny low-risk diffs may use one focused review covering simplicity and correctness; other non-empty diffs require dedicated `ponytail-review` followed by `code-review`.
+7. Apply or explicitly disposition every simplicity finding from the selected review mode. Resolve P0/P1 code-review findings; resolve or explicitly disposition P2 findings. Update episode state.
 8. For a PR delivery path, invoke `create-pr` with the intended base, accepted artifacts, final validation, risks, and monitor requirement. For an explicitly authorized direct path, use the direct-delivery contract below.
 9. Verify that the returned delivery record matches the intended local/remote refs and contains the applicable monitor evidence or a concrete blocker.
 10. Continue the review loop until terminal state, then perform closeout.
 
-## Two-Pass Implementation Review
+## Implementation review
 
-Keep the passes separate so neither objective is diluted:
+Use `combined` only for a tiny, established-pattern diff with no material
+ambiguity, security/data risk, compatibility impact, or coordination, and only
+when repository policy permits it. The focused `code-review` must check both
+unnecessary machinery and correctness; record the reason and findings. A missing
+Ponytail installation does not block this route. Reassess the mode if scope grows.
+
+Use `separate` for other non-empty diffs or when required by the user or repository:
+
 
 1. `ponytail-review` receives the final diff, brief, accepted plan, and repository instructions—not the full conversation. It reviews only for removable code, duplicated paths, reinvention, speculative abstraction or flexibility, unnecessary dependencies, and opportunities to shrink. Preserve requirements and safeguards. Record its output and estimated net removable lines in episode state.
 2. `code-review` reviews the same head SHA for correctness, behavior, regression, accessibility, security/privacy, compatibility, reliability, and test coverage. It must not treat the Ponytail pass as correctness evidence.
 
-If Ponytail finds nothing, record `Lean already. Ship.` If it finds something, apply it or record a concrete reason the machinery is required. Re-run the affected validation after changes. Re-run both passes when the implementation changes materially; do not repeat them for comments, formatting, or metadata-only edits.
+If Ponytail finds nothing, record `Lean already. Ship.` If it finds something, apply it or record a concrete reason the machinery is required. Re-run the affected validation after changes. Re-run the selected review mode when the implementation changes materially; do not repeat them for comments, formatting, or metadata-only edits.
 
-If `ponytail-review` is unavailable, record phase `code-review`, status `blocked`, and the missing capability as the blocking condition rather than silently folding simplicity into the normal code review.
+When separate review is required and `ponytail-review` is unavailable, record phase `code-review`, status `blocked`, and the missing capability as the blocking condition rather than silently folding simplicity into the normal code review.
 
 ## Direct Delivery Contract
 
-Use a no-PR path only when the user's current instruction explicitly authorizes it and repository policy permits it. Reconfirm the target branch, remote, exact commit set, current-head validation, and both review dispositions immediately before delivery. Deliver without rewriting shared history, then read back the remote target SHA and any required CI, deployment, or promotion state. Record status `delivered-direct` only when the intended remote state is verified; otherwise record status `blocked` with the exact mismatch or external condition.
+Use a no-PR path only when the user's current instruction explicitly authorizes it and repository policy permits it. Verify the target branch, remote, exact commit set, current-head validation, and applicable review dispositions immediately before delivery. Verification is a tool check, not another user confirmation when authorization is already clear. Deliver without rewriting shared history, then read back the remote target SHA and any required CI, deployment, or promotion state. Record status `delivered-direct` only when the intended remote state is verified; otherwise record status `blocked` with the exact mismatch or external condition.
 
 Do not invoke `create-pr` for direct delivery. Establish a branch or deployment monitor only when the delivery contract requires one and the available automation can observe the relevant state. After direct integration is verified, use the same Forest close-or-retain decision described in Closeout.
 
@@ -65,7 +86,7 @@ PR creation is incomplete until all are recorded:
 - PR URL and number;
 - head/base branches and head SHA;
 - initial mergeability/check state;
-- `monitor_status: active` and monitor ID, or `blocked` with exact reason;
+- when monitoring is required, `monitor_status: active` and monitor ID, or `blocked` with exact reason; otherwise `not-applicable` with its authorization basis;
 - terminal condition.
 
 If the user asks “are you monitoring?”, verify the live automation record. Do not answer from intention, a todo list, or a previous one-time poll.
@@ -88,6 +109,6 @@ Record final validation, PR state, deployment/promotion state when applicable, u
 
 Close a Forest worktree only through Forest and only when integration is proven or the user/repository policy authorizes closure. A squash merge may require explicit remote evidence; do not mistake ancestry mismatch for unmerged work.
 
-When a merge is verified and the Forest worktree still exists, inspect its Forest and Git status, then ask the user whether to close it. On approval, refuse closure if uncommitted or unpushed work remains; otherwise run `forest close` for the resolved worktree, verify its removal with Forest status, and record the evidence. If the user chooses to keep it, record `retained` so it is an intentional exception rather than forgotten cleanup. Do not issue the final closeout while the choice is still pending.
+When integration is verified and the Forest worktree still exists, inspect its Forest and Git status. Resolve an explicit task or saved user close-or-retain instruction and record its source; ask once only if none applies. For authorized closure, preserve any uncommitted or unpushed work and ask how to handle it; otherwise run `forest close`, verify removal, and record the evidence. Record `retained` when requested. Do not issue final closeout while a required decision or closure remains pending.
 
 Return a compact final report from the episode state. Do not leave a monitor running after the episode's actual terminal condition. A merged PR with a pending Forest close-or-retain decision is not yet terminal; after that decision is recorded, stop the monitor unless the user explicitly requested further monitoring.

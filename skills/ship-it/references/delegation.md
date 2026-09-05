@@ -37,7 +37,7 @@ ship_it:
       reasoning_effort: "<optional-harness-native-level>"
 ```
 
-The lasting default is optional, and each worker section is absent until its owning stage configures it. Never create the file or an empty section merely because fallback mode is `always`. The current session is the orchestrator and must not be persisted.
+The lasting default is optional, and each worker section is absent until its owning stage configures it. Never create the file or an empty section merely because fallback mode is `auto`. The current session is the orchestrator and must not be persisted.
 
 Each harness entry must use exactly one selector:
 

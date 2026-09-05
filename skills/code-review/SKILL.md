@@ -1,18 +1,19 @@
 ---
 name: code-review
 description: Review the current branch or pull-request diff for actionable correctness, security, reliability, regression, and test issues before PR creation or after material fixes. Use a fresh reviewer when change risk or size justifies independence; report evidence-backed findings only.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Code Review
 
 Review only changes introduced by the target diff. Prioritize defects that can affect behavior or safe delivery; omit generic style advice and pre-existing issues.
 
-This is the correctness-focused second pass after `ponytail-review`. Do not duplicate its complexity audit, and do not assume that a short diff is correct merely because the Ponytail pass accepted it.
+For separate review, this is the correctness-focused pass after `ponytail-review`; do not duplicate that complexity audit. For an explicitly recorded tiny combined review, also inspect unnecessary machinery in this pass. Simplicity never substitutes for correctness evidence.
 
 ## Inputs
 
 - Head and base refs plus final head SHA.
+- Review mode: combined (tiny, policy-permitted) or separate; include its reason.
 - Changed files, commits, and whether uncommitted changes are included.
 - Brief, accepted plan, episode state, and relevant finding dispositions when part of Kickoff.
 - Applicable repository instructions and PR title/body when available.
@@ -33,6 +34,7 @@ Seed an isolated reviewer with the diff and durable artifacts, not the implement
 4. Accessibility, user trust, security, privacy, and integrity boundaries.
 5. Consumer, platform, browser/device, visual-system, and rollout compatibility where relevant.
 6. Tests for consequential new behavior and regressions.
+7. In combined mode, inspect removable code, duplicate paths, reinvention of existing helpers, speculative abstractions, dependencies, and configuration. Preserve required behavior and safeguards; report concrete simplifications separately from correctness findings.
 
 Use history or sibling code only when it clarifies an introduced invariant. Verify findings before reporting them.
 
@@ -45,7 +47,7 @@ Report only findings with confidence at least 70/100:
 - `P2`: meaningful edge case or missing risky validation that should normally be fixed.
 - `P3`: non-blocking improvement; omit unless the caller explicitly requests nits.
 
-Give every finding a stable ID such as `CR-001`. Do not split one root cause into several findings.
+Give correctness findings stable IDs such as `CR-001`. In combined mode, give concrete simplicity findings IDs such as `SIM-001` and classify them as Simplify or Remove/Defer; they need not qualify as correctness P0–P2 and are not suppressed as P3 nits. Include evidence, preserved behavior, and the proposed reduction. The caller applies each or records a reason to retain it. Do not split one root cause into several findings.
 
 ## Output
 
@@ -54,10 +56,15 @@ Give every finding a stable ID such as `CR-001`. Do not split one root cause int
 - Head/base/SHA:
 - Files reviewed:
 - Independent reviewer: yes | no
+- Review mode and reason:
 - Started/completed at:
 
 ## Findings
 | ID | Priority | Confidence | File:line | Evidence and impact | Suggested fix |
+| --- | --- | --- | --- | --- | --- |
+
+## Simplicity Findings (combined mode)
+| ID | Classification | File:line | Evidence | Reduction and preserved behavior | Disposition |
 | --- | --- | --- | --- | --- | --- |
 
 ## Coverage Checked

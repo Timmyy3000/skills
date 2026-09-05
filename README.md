@@ -16,8 +16,8 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
 | `simplicity-review` | Force plans through delete, reuse, and compress passes while preserving required outcomes and safeguards. |
 | `plan-it` | Create proportionate, evidence-backed plans inline for tiny work or through a configured worker for fast/full work. |
-| `ship-it` | Execute accepted plans through validation, dedicated Ponytail and correctness reviews, monitored PR delivery, and closeout. |
-| `code-review` | Run the correctness-focused implementation review after the dedicated Ponytail complexity pass. |
+| `ship-it` | Execute accepted plans through validation, proportionate simplicity/correctness review, authorized delivery, and closeout. |
+| `code-review` | Review correctness, with a combined simplicity check for tiny policy-permitted diffs. |
 | `create-pr` | Verify the intended target, create or update the PR, and establish active review monitoring. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 | `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |

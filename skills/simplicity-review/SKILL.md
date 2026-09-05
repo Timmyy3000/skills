@@ -1,7 +1,7 @@
 ---
 name: simplicity-review
 description: Independently force an engineering plan toward the least machinery that achieves the requested outcome while preserving constraints and safety controls. Use for full plans, or when a fast/tiny plan introduces material complexity; return reconciled plan feedback, not code changes.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Simplicity Review
