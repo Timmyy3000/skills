@@ -1,12 +1,26 @@
 ---
 name: grill-to-spec
 description: Turn an ambiguous product or feature idea into a durable, repository-owned product specification through a decision-tree interview. Use when feature work lacks an approved spec, when a product owner needs a handoff artifact for engineers, or when kickoff must resolve product ambiguity before planning. Do not use for clear small bugs or refactors that already have precise behavior and acceptance criteria.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Grill to Spec
 
 Turn the user's product intent into an approved specification. Own the **what** and **why**; do not create an implementation plan, modify product code, create implementation tickets, or begin execution.
+
+## Scope and authorization
+
+Honor explicit user scope and applicable prior authorization over workflow
+defaults. Continue authorized preparation and reversible work using established
+conventions; ask only for material unresolved decisions or authority not already
+given. Preserve engineering safeguards and access controls. If a skill blocks
+progress, identify the exact instruction and concrete conflict, and continue
+independent authorized work.
+
+For a read-only or no-change request, return findings in chat without creating or
+updating plans, state, memory, configuration, or knowledge records unless those
+writes are explicitly authorized. Preserve current user corrections over stale
+artifacts, updating those artifacts only when writes are in scope.
 
 ## Route the request
 

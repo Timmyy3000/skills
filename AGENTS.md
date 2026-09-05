@@ -10,6 +10,14 @@ This repository contains shareable agent skills.
 - Validate changed skills before committing.
 - If a skill bundles third-party content, preserve attribution and license notes.
 
+## Workflow maintenance
+
+- Honor the user's scope and prior authorization; read-only requests include
+  memory and generated artifacts. Do not add permission gates for routine work.
+- Keep route, review, artifact, and cleanup rules consistent across SKILL.md,
+  referenced templates, worker instructions, and UI prompts.
+- Use the repository validator for its supported versioned frontmatter.
+
 ## Validation
 
 Use:

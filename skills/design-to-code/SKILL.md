@@ -1,12 +1,26 @@
 ---
 name: design-to-code
 description: Implement and refine interfaces from Aphrodite MCP evidence and visual references through project-aware, screenshot-validated iteration; use when a design handoff needs comparison, clarification, and convergence rather than a one-shot UI build.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Aphrodite Design Loop
 
 Use Aphrodite as evidence, not as a one-shot generator. The goal is an implementation that belongs in the target project and converges against the supplied design reference at the requested viewport.
+
+## Scope and authorization
+
+Honor explicit user scope and applicable prior authorization over workflow
+defaults. Continue authorized preparation and reversible work using established
+conventions; ask only for material unresolved decisions or authority not already
+given. Preserve engineering safeguards and access controls. If a skill blocks
+progress, identify the exact instruction and concrete conflict, and continue
+independent authorized work.
+
+For a read-only or no-change request, return findings in chat without creating or
+updating plans, state, memory, configuration, or knowledge records unless those
+writes are explicitly authorized. Preserve current user corrections over stale
+artifacts, updating those artifacts only when writes are in scope.
 
 ## Evidence boundary
 
@@ -20,21 +34,21 @@ Use Aphrodite as evidence, not as a one-shot generator. The goal is an implement
 
 1. Identify the application root and read its repository instructions.
 2. Audit the stack: package scripts, framework/router, component primitives, styling approach (CSS, CSS Modules, Tailwind, etc.), tokens, fonts, asset directories, responsive conventions, and test/render commands.
-3. Before design interpretation or implementation, ask the user for a plain-language flow rundown and design requirements. Ask what the page is for, what the user is trying to accomplish, what each control does, what changes after interactions, what navigation should do, which states matter, and what must not be changed. Do not infer product behavior from pixels alone.
+3. Establish the UI flow from the current request, accepted spec, existing user brief, and inspected project behavior. Ask only for material behavior that those sources cannot resolve. Do not infer product behavior from pixels alone or make the user repeat an existing brief.
 4. Call `list_design_screens`, then call `get_design_context` for the requested frame. Request focused subtree contexts for dense or omitted regions.
-5. Reconcile the user-provided flow and requirements with the project audit, screenshot, and MCP evidence. Mark conflicts explicitly and ask the user to resolve them before coding; user requirements define behavior, while MCP/screenshot evidence defines recorded/visual design unless the user says otherwise.
+5. Reconcile the user-provided flow and requirements with the project audit, screenshot, and MCP evidence. Resolve conflicts using explicit user requirements and accepted decisions; ask only for unresolved material choices before coding the dependent behavior, while continuing independent work; user requirements define behavior, while MCP/screenshot evidence defines recorded/visual design unless the user says otherwise.
 6. Build an evidence map for every visible region: screenshot region, likely MCP node ID/name, recorded bounds/style, resolved asset, confidence, and missing/contradictory evidence.
-7. If a required asset is missing, a visual relationship is ambiguous, or MCP truncation prevents a material decision, stop and ask the user a focused clarification or asset request. State exactly what is missing, why it affects implementation, and what choices would unblock it. Do not continue with a fabricated substitute unless the user explicitly approves one.
+7. If a required asset is missing, a visual relationship is ambiguous, or MCP truncation prevents a material decision, pause the dependent region and ask the user a focused clarification or asset request; continue independent regions. State exactly what is missing, why it affects implementation, and what choices would unblock it. Do not continue with a fabricated substitute unless the user explicitly approves one.
 8. Treat distinctive visual identity as material by default: mascots, avatars, branded illustrations, custom icons, logos, signature shapes, and their faces/details cannot be replaced with generic CSS shapes. Obtain the resolved asset or a focused MCP subtree; if neither is available, ask before approximating it.
-9. When a resolved asset has a `cacheSourcePath`, first look for that asset in the consuming project’s tracked/exported asset handoff or an existing sibling handoff produced from the same MCP import. If the binary is not accessible without inspecting `.aphrodite/` internals, stop and ask for an export or a safe asset handoff; do not silently substitute a CSS drawing. Record the asset provenance and destination in the evidence map.
+9. When a resolved asset has a `cacheSourcePath`, first look for that asset in the consuming project’s tracked/exported asset handoff or an existing sibling handoff produced from the same MCP import. If the binary is not accessible without inspecting `.aphrodite/` internals, pause the dependent asset work and ask for an export or a safe asset handoff; continue independent regions and do not silently substitute a CSS drawing. Record the asset provenance and destination in the evidence map.
 
 ## User-provided UI flow and design brief
 
-Before writing implementation code, obtain a short UI flow explanation and design brief from the user. Offer this prompt when they have not supplied one:
+Before writing dependent interaction code, establish a short UI flow explanation and design brief from the sources above. When material behavior is still missing, ask only the unanswered parts of this prompt:
 
 > What is this page for, what is the user trying to do, and what should happen when each visible control is used? Please describe the initial state, inputs/selections, progress, validation, save/continue/back behavior, loading/error/empty states, responsive requirements, and any design details that must be preserved.
 
-Capture the user’s answer as the behavioral source of truth. It should state:
+Record the source of each behavioral requirement; current explicit user corrections take precedence over earlier descriptions. The brief should state:
 
 - The page’s purpose and the user’s goal.
 - The meaning of each visible control, indicator, input, selection, and navigation action.
@@ -78,7 +92,7 @@ Ask instead of guessing when any of these would materially change the result:
 - A visual element could reasonably be an existing component, an image, or a CSS shape.
 - Responsive behavior, interaction states, or content are not specified.
 
-Ask one compact set of questions, include the evidence and the decision affected, and offer the smallest concrete options. Resume the loop only after the ambiguity is resolved or the user explicitly accepts an approximation.
+Ask one compact set of questions, include the evidence and the decision affected, and offer the smallest concrete options. Resume the dependent portion after the ambiguity is resolved or an approximation is explicitly accepted; continue independent implementation and verification meanwhile.
 
 ## Completion report
 

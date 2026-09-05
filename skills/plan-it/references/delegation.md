@@ -61,13 +61,13 @@ Dispatch one fresh planning worker with the smallest complete context:
 - Work brief and task-workspace paths.
 - Worktree path and repository instructions.
 - Relevant specs, tickets, logs, screenshots, architecture docs, and code references.
-- Required artifact location and the plan content standard.
+- Required artifact location, plan content standard, and recorded `HTML required: yes | no` with its reason.
 
 Tell the worker to inspect the repository and cited evidence before planning. It must make no implementation changes, spawn no additional workers, and avoid unrelated exploration. Durable artifacts and explicit paths are the source of truth; do not rely on orchestrator conversation history.
 
 ## Artifact And Result Contract
 
-For `full`, create and open the Lavish artifact required by `plan-it`. For `fast`, create a concise Markdown plan in the brief or the repository's established sibling plan location. For an explicitly delegated `tiny` plan, write only the inline objective, affected surface, 1–3 steps, acceptance checks, and rollback required by `plan-it`.
+For `full`, create the required Markdown plan. Create and open a Lavish artifact only when the packet records `HTML required: yes`; otherwise Markdown is the complete review artifact. For `fast`, create a concise Markdown plan in the brief or the repository's established sibling plan location. For an explicitly delegated `tiny` plan, write only the inline objective, affected surface, 1–3 steps, acceptance checks, and rollback required by `plan-it`.
 
 Return:
 
@@ -109,4 +109,4 @@ Route accepted adversarial findings, dispositions, simplicity findings, user ann
 
 Require the planner to update the artifact and return the same structured result plus a concise revision summary. The orchestrator records dispositions and validates the handoff; it does not silently author substantive plan revisions itself.
 
-After the user accepts a full plan, route that acceptance to the planning worker. Require it to end the Lavish session, export the self-contained read-only archive, and return both the editable artifact and accepted archive paths. The orchestrator validates the archive and hands the archive—not the live editing session—to implementation.
+After a full plan is accepted under the task authorization, route acceptance to the planning worker. If HTML was required, end the Lavish session, export the self-contained read-only archive, and return the Markdown, editable HTML, and accepted archive paths. Otherwise return the accepted Markdown without starting a visual session. The orchestrator validates the accepted artifacts and hands those to implementation.

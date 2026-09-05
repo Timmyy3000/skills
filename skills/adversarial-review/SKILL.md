@@ -1,7 +1,7 @@
 ---
 name: adversarial-review
 description: Independently challenge an engineering brief, plan, investigation, or delivery proposal for correctness, missing requirements, unsafe assumptions, and inadequate validation. Use before execution when risk or workflow policy warrants a fresh review; produce findings for plan revision, never implementation changes.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Adversarial Review
