@@ -18,6 +18,7 @@ Create one file per delivery episode. Keep it compact enough to read after every
 - Brief:
 - Plan:
 - HTML required and reason:
+- Command path/version provenance (closure commands):
 
 ## Current State
 - Phase: intake | planning | plan-review | approval | implementation | code-review | pr-creation | monitoring | closeout | terminal
@@ -65,8 +66,14 @@ Create one file per delivery episode. Keep it compact enough to read after every
 - Deployment/promotion:
 - Forest worktree: not-applicable | present | closed | retained | closure-blocked
 - Cleanup authorization source:
+- Exact worktree owner at closeout:
+- Live-use check/result (owner task and associated terminals/processes):
+- Temporary retention owner:
+- Retention revisit trigger: review/testing complete | merge | other
+- Retention revisit handoff: named owner/follow-up or authorized monitor
 - Post-merge worktree choice: not-applicable | pending | close | retain
-- Forest closure evidence:
+- Forest closure evidence (Forest state, Git registration, exact disk path):
+- Ignored evidence/config retained (authorized location, names, and verification hashes only):
 - Worktree disposition:
 - Temporary artifacts:
 - Durable records reconciled:
@@ -88,5 +95,7 @@ Rules:
 
 - Store decisions and evidence pointers, not transcript summaries.
 - Update a row instead of appending duplicate prose.
-- Never include secrets or raw sensitive output.
+- Preserve relevant ignored evidence/config at an authorized durable location and record names, pointers, and verification hashes only; never include arbitrary ignored files, secrets, or raw sensitive output.
+- A partial or unverified close is `closure-blocked`; retain the owner, content, branch, and monitor and record the failed surface.
+- An actively running worktree cannot close; record the temporary retention owner and revisit trigger.
 - A handoff is invalid when this file contradicts the brief or accepted plan.

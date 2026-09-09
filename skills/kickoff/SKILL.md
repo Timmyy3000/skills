@@ -97,7 +97,7 @@ For a PR delivery path, `ship-it` must invoke `create-pr`. PR creation and monit
 - It returns a structured PR record including `monitor_status` and `monitor_id`.
 - If required monitoring cannot be established, record phase `monitoring`, status `blocked`, and the exact reason; do not report normal completion.
 
-The monitor checks current-head CI, security/policy/code review, mergeability, human comments, and head changes. It stays quiet when nothing actionable changes, applies only authorized scoped fixes, and never merges without explicit permission. For a Forest-managed worktree, a verified merge starts cleanup: honor an applicable explicit task or saved user close-or-retain instruction. Ask once only when no applicable authorization exists. Stay quiet while an answer is pending, and record the decision, source, and verified result.
+The monitor checks current-head CI, security/policy/code review, mergeability, human comments, and head changes. It stays quiet when nothing actionable changes, applies only authorized scoped fixes, and never merges without explicit permission. Use Ship-it's integration contract to distinguish verified Git ancestry or patch/aggregate equivalence from exact merged PR head evidence; PR evidence must match the repository, PR, head SHA, base, and merged state. A missing or deleted tracking ref alone does not prove unpublished work, and stale or unmatched PR evidence cannot bypass Forest's dirty or integration safeguards. For a Forest-managed worktree, a verified merge starts cleanup: re-inspect the exact worktree and its current owner, then honor the latest applicable explicit task or saved user close-or-retain instruction. Ask once only when no applicable authorization exists. Stay quiet while an answer is pending, and record the decision, source, and verified result.
 
 ## Closeout Contract
 
@@ -113,7 +113,7 @@ Before the final answer, verify and record:
 
 If the PR is ready but not merged, preserve the worktree unless repository policy or the user explicitly authorizes safe closure. Do not claim post-merge deployment or cleanup that has not happened.
 
-After integration is verified, inspect the exact Forest-managed worktree. Apply an explicit task or saved user close-or-retain instruction; record its source and ask once only if no applicable decision exists. Authorized closure still requires no uncommitted or unpushed work: use `forest close`, verify removal with Forest status, and record the result. Record intentional retention. If unresolved work remains, preserve it and ask how it should be handled. Closeout remains pending only while a required decision or operation is unresolved.
+Ship-it owns detailed Forest closeout. Re-inspect the exact worktree and current owner, re-evaluate the latest close-or-retain authority, and record its source. Verify Forest state, `git worktree list --porcelain`, and the exact disk path after closure; a partial or unverified close remains `closure-blocked` with owner, content, branch, and monitor retained.
 
 ## Version And Dependency Preflight
 
