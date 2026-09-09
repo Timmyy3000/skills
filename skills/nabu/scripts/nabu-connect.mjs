@@ -145,6 +145,31 @@ export function getWindowsAclCommands({ directoryPath, filePath, sid }) {
   ];
 }
 
+export function parseWindowsAclDump(content, sid) {
+  assertSafeValue('Windows SID', sid);
+  if (!/^S-1-[0-9-]+$/u.test(sid)) throw new Error('Invalid Windows SID');
+  const currentAliases = sid.endsWith('-500') ? ['LA'] : [];
+  const allowed = new Set([
+    sid.toUpperCase(),
+    ...currentAliases,
+    'SY',
+    'BA',
+    'S-1-5-18',
+    'S-1-5-32-544',
+  ]);
+  const unapproved = [];
+  let sawCurrentSid = false;
+  for (const match of content.matchAll(/\(([^()]*)\)/gu)) {
+    const fields = match[1].split(';');
+    if (!['A', 'OA'].includes(fields[0])) continue;
+    const trustee = fields.at(-1).toUpperCase();
+    if (trustee === sid.toUpperCase() || currentAliases.includes(trustee)) sawCurrentSid = true;
+    if (!allowed.has(trustee)) unapproved.push(trustee);
+  }
+  if (!sawCurrentSid) unapproved.push('MISSING_CURRENT_SID');
+  return [...new Set(unapproved)];
+}
+
 function parseArgs(argv) {
   const options = {
     mode: 'invite',
@@ -165,22 +190,45 @@ function parseArgs(argv) {
   return options;
 }
 
-function defaultCredentialsRoot(platform = process.platform) {
-  if (process.env.NABU_CREDENTIALS_DIR) return process.env.NABU_CREDENTIALS_DIR;
-  if (process.env.CODEX_HOME) return path.join(process.env.CODEX_HOME, 'secrets', 'nabu');
-  const home = os.homedir();
-  const codexRoot = path.join(home, '.codex');
-  if (fs.existsSync(codexRoot)) return path.join(codexRoot, 'secrets', 'nabu');
+export function defaultCredentialsRoot({
+  platform = process.platform,
+  env = process.env,
+  home = os.homedir(),
+} = {}) {
+  if (env.NABU_CREDENTIALS_DIR) return env.NABU_CREDENTIALS_DIR;
   if (platform === 'win32') {
-    return path.join(process.env.APPDATA || home, 'Nabu', 'credentials');
+    return path.win32.join(env.APPDATA || home, 'Nabu', 'credentials');
   }
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'nabu', 'credentials');
+  return path.posix.join(env.XDG_CONFIG_HOME || path.posix.join(home, '.config'), 'nabu', 'credentials');
 }
 
 function assertNotLink(target) {
-  if (!fs.existsSync(target)) return;
-  const details = fs.lstatSync(target);
+  let details;
+  try {
+    details = fs.lstatSync(target);
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return;
+    throw error;
+  }
   if (details.isSymbolicLink()) throw new Error(`Refusing symlink or reparse point: ${target}`);
+}
+
+function assertCreatablePathNotLink(target) {
+  let current = path.resolve(target);
+  while (true) {
+    try {
+      const details = fs.lstatSync(current);
+      if (details.isSymbolicLink()) {
+        throw new Error(`Refusing symlink or reparse point: ${current}`);
+      }
+      return;
+    } catch (error) {
+      if (!error || error.code !== 'ENOENT') throw error;
+      const parent = path.dirname(current);
+      if (parent === current) return;
+      current = parent;
+    }
+  }
 }
 
 function windowsSid() {
@@ -194,14 +242,45 @@ function windowsSid() {
   return match[1];
 }
 
-function runCommand(command) {
+function runCommand(command, failureMessage = 'securing the Nabu profile') {
   const result = spawnSync(command.command, command.args, {
     encoding: 'utf8',
     windowsHide: true,
   });
   if (result.status !== 0) {
-    throw new Error(`${command.command} failed while securing the Nabu profile`);
+    const detail = String(result.stderr || result.stdout || '').trim().slice(0, 500);
+    throw new Error(`${command.command} failed while ${failureMessage}${detail ? `: ${detail}` : ''}`);
   }
+  return result;
+}
+
+function decodeIcaclsDump(buffer) {
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return buffer.subarray(2).toString('utf16le');
+  }
+  if (buffer.includes(0)) return buffer.toString('utf16le');
+  return buffer.toString('utf8');
+}
+
+function auditWindowsAcl(targetPath, sid) {
+  const dumpPath = path.join(os.tmpdir(), `.nabu-acl-${crypto.randomUUID()}.txt`);
+  try {
+    runCommand({
+      command: 'icacls.exe',
+      args: [targetPath, '/save', dumpPath, '/q'],
+    }, 'exporting the Nabu profile ACL for verification');
+    const unapproved = parseWindowsAclDump(decodeIcaclsDump(fs.readFileSync(dumpPath)), sid);
+    if (unapproved.length > 0) {
+      throw new Error(`Nabu profile ACL contains unapproved allow identities: ${unapproved.join(',')}`);
+    }
+  } finally {
+    if (fs.existsSync(dumpPath)) fs.rmSync(dumpPath);
+  }
+}
+
+function secureWindowsPath(targetPath, aclCommand, sid) {
+  runCommand(aclCommand);
+  auditWindowsAcl(targetPath, sid);
 }
 
 function prepareDirectory(directoryPath, platform = process.platform) {
@@ -209,12 +288,13 @@ function prepareDirectory(directoryPath, platform = process.platform) {
   fs.mkdirSync(directoryPath, { recursive: true, mode: 0o700 });
   assertNotLink(directoryPath);
   if (platform === 'win32') {
+    const sid = windowsSid();
     const [directoryCommand] = getWindowsAclCommands({
       directoryPath,
       filePath: path.join(directoryPath, 'probe'),
-      sid: windowsSid(),
+      sid,
     });
-    runCommand(directoryCommand);
+    secureWindowsPath(directoryPath, directoryCommand, sid);
   } else {
     fs.chmodSync(directoryPath, 0o700);
   }
@@ -226,13 +306,13 @@ function prepareDirectory(directoryPath, platform = process.platform) {
   fs.unlinkSync(probe);
 }
 
-function atomicWriteProfile(profilePath, content, { replace, platform = process.platform }) {
-  const directoryPath = path.dirname(profilePath);
-  const temporaryPath = path.join(directoryPath, `.nabu-profile-${crypto.randomUUID()}.tmp`);
-  if (!replace && fs.existsSync(profilePath)) {
-    throw new Error(`Profile already exists: ${profilePath}. Use --replace only after explicit approval.`);
+function atomicWriteRestricted(targetPath, content, { replace, platform = process.platform }) {
+  const directoryPath = path.dirname(targetPath);
+  const temporaryPath = path.join(directoryPath, `.nabu-write-${crypto.randomUUID()}.tmp`);
+  if (!replace && fs.existsSync(targetPath)) {
+    throw new Error(`Credential file already exists: ${targetPath}. Use --replace only after explicit approval.`);
   }
-  assertNotLink(profilePath);
+  assertNotLink(targetPath);
   let handle;
   try {
     handle = fs.openSync(temporaryPath, 'wx', 0o600);
@@ -241,16 +321,17 @@ function atomicWriteProfile(profilePath, content, { replace, platform = process.
     fs.closeSync(handle);
     handle = undefined;
     if (platform === 'win32') {
+      const sid = windowsSid();
       const [, fileCommand] = getWindowsAclCommands({
         directoryPath,
         filePath: temporaryPath,
-        sid: windowsSid(),
+        sid,
       });
-      runCommand(fileCommand);
+      secureWindowsPath(temporaryPath, fileCommand, sid);
     } else {
       fs.chmodSync(temporaryPath, 0o600);
     }
-    fs.renameSync(temporaryPath, profilePath);
+    fs.renameSync(temporaryPath, targetPath);
   } catch (error) {
     if (handle !== undefined) fs.closeSync(handle);
     if (fs.existsSync(temporaryPath)) fs.rmSync(temporaryPath);
@@ -324,15 +405,53 @@ async function verifyProfile(profile, links = {}) {
 }
 
 async function readStdin() {
-  let input = '';
+  if (!process.stdin.isTTY) {
+    let input = '';
+    process.stdin.setEncoding('utf8');
+    for await (const chunk of process.stdin) input += chunk;
+    return input.trim();
+  }
+  if (typeof process.stdin.setRawMode !== 'function') {
+    throw new Error('Secure interactive input is unavailable; pass the secret through process stdin');
+  }
+  process.stderr.write('Paste the Nabu invite or response JSON (input hidden), then press Enter: ');
   process.stdin.setEncoding('utf8');
-  for await (const chunk of process.stdin) input += chunk;
-  return input.trim();
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  return new Promise((resolve, reject) => {
+    let input = '';
+    const finish = () => {
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdin.removeListener('data', onData);
+      process.stderr.write('\n');
+    };
+    const onData = (chunk) => {
+      if (chunk === '\u0003') {
+        finish();
+        reject(new Error('Input cancelled'));
+        return;
+      }
+      if (chunk.includes('\r') || chunk.includes('\n')) {
+        input += chunk.split(/[\r\n]/u, 1)[0];
+        finish();
+        resolve(input.trim());
+        return;
+      }
+      if (chunk === '\u007f' || chunk === '\b') input = input.slice(0, -1);
+      else input += chunk;
+    };
+    process.stdin.on('data', onData);
+  });
 }
 
 export async function connect(options, input) {
   let apiBaseUrl;
   let response;
+  let directoryPrepared = false;
+  const credentialsRoot = path.resolve(options.credentialsDir || defaultCredentialsRoot());
+  assertCreatablePathNotLink(credentialsRoot);
+
   if (options.mode === 'response') {
     apiBaseUrl = canonicalizeApiBase(options.apiBaseUrl);
     response = JSON.parse(input);
@@ -340,39 +459,79 @@ export async function connect(options, input) {
     const candidate = input.startsWith('{') ? JSON.parse(input).inviteUrl : input;
     const inviteUrl = assertSafeValue('inviteUrl', candidate);
     apiBaseUrl = apiBaseFromInvite(inviteUrl);
-    const credentialsRoot = path.resolve(options.credentialsDir || defaultCredentialsRoot());
-    assertNotLink(credentialsRoot);
     prepareDirectory(path.join(credentialsRoot, deploymentHash(apiBaseUrl)));
+    directoryPrepared = true;
     response = await redeemInvite(apiBaseUrl, inviteUrl);
   }
-  const parsed = parseRedemptionResponse(response);
-  const credentialsRoot = path.resolve(options.credentialsDir || defaultCredentialsRoot());
-  assertNotLink(credentialsRoot);
-  const profilePath = getProfilePath({
-    credentialsRoot,
-    deploymentHash: deploymentHash(apiBaseUrl),
-    sharedSpaceId: parsed.sharedSpaceId,
-  });
-  prepareDirectory(path.dirname(profilePath));
-  atomicWriteProfile(profilePath, buildProfileContent({ apiBaseUrl, ...parsed }), {
-    replace: options.replace,
-  });
-  const reloaded = parseProfile(fs.readFileSync(profilePath, 'utf8'));
-  const verificationStatus = await verifyProfile(reloaded, parsed.links);
-  return {
-    connected: true,
-    profilePath,
-    sharedSpaceId: parsed.sharedSpaceId,
-    rootPath: parsed.rootPath,
-    permissions: parsed.permissions,
-    accessTokenExpiresAt: parsed.accessTokenExpiresAt,
-    verificationStatus,
-    nextAction: 'configure_mcp_bearer_from_profile',
-  };
+
+  const directoryPath = path.join(credentialsRoot, deploymentHash(apiBaseUrl));
+  if (!directoryPrepared) prepareDirectory(directoryPath);
+  const recoverableToken = response && typeof response === 'object'
+    ? response.accessToken
+    : '';
+  let recoveryPath = '';
+  let profilePath = '';
+  let profileWritten = false;
+
+  if (typeof recoverableToken === 'string' && recoverableToken.length > 0) {
+    assertSafeValue('accessToken', recoverableToken);
+    recoveryPath = path.join(directoryPath, `.nabu-recovery-${crypto.randomUUID()}.json`);
+    atomicWriteRestricted(recoveryPath, `${JSON.stringify(response)}\n`, { replace: false });
+  }
+
+  try {
+    const parsed = parseRedemptionResponse(response);
+    profilePath = getProfilePath({
+      credentialsRoot,
+      deploymentHash: deploymentHash(apiBaseUrl),
+      sharedSpaceId: parsed.sharedSpaceId,
+    });
+    atomicWriteRestricted(profilePath, buildProfileContent({ apiBaseUrl, ...parsed }), {
+      replace: options.replace,
+    });
+    profileWritten = true;
+    const reloaded = parseProfile(fs.readFileSync(profilePath, 'utf8'));
+    const verificationStatus = await verifyProfile(reloaded, parsed.links);
+    let recoveryCleanupPath = '';
+    if (recoveryPath) {
+      try {
+        fs.rmSync(recoveryPath);
+      } catch {
+        recoveryCleanupPath = recoveryPath;
+      }
+    }
+    return {
+      connected: true,
+      profilePath,
+      sharedSpaceId: parsed.sharedSpaceId,
+      rootPath: parsed.rootPath,
+      permissions: parsed.permissions,
+      accessTokenExpiresAt: parsed.accessTokenExpiresAt,
+      verificationStatus,
+      nextAction: 'configure_mcp_bearer_from_profile',
+      ...(recoveryCleanupPath ? { recoveryCleanupPath } : {}),
+    };
+  } catch (error) {
+    if (profileWritten) {
+      let cleanupSuffix = '';
+      if (recoveryPath && fs.existsSync(recoveryPath)) {
+        try {
+          fs.rmSync(recoveryPath);
+        } catch {
+          cleanupSuffix = `; remove the redundant recovery file at ${recoveryPath}`;
+        }
+      }
+      throw new Error(`${error.message}. The credential profile remains stored at ${profilePath}${cleanupSuffix}`);
+    }
+    if (recoveryPath) {
+      throw new Error(`${error.message}. The redeemed response is preserved at ${recoveryPath}; do not redeem the invite again`);
+    }
+    throw error;
+  }
 }
 
 function usage() {
-  return `Usage:\n  printf '%s' "$INVITE_URL" | node nabu-connect.mjs [--credentials-dir PATH]\n  printf '%s' "$RESPONSE_JSON" | node nabu-connect.mjs --response-stdin --api-base URL [--credentials-dir PATH]\n\nSecrets are read only from stdin and are never printed.`;
+  return `Usage:\n  node nabu-connect.mjs [--credentials-dir PATH]\n  node nabu-connect.mjs --response-stdin --api-base URL [--credentials-dir PATH]\n\nInteractive terminals prompt for hidden input. Automation must write the invite or response JSON directly to process stdin; do not place either secret in arguments, environment variables, shell variables, or temporary files. Secrets are never printed.`;
 }
 
 async function main() {

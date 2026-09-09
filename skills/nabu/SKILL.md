@@ -1,7 +1,7 @@
 ---
 name: nabu
 description: Work with self-hosted Nabu knowledge spaces through native remote MCP first, including owner-agent connection links, bearer authentication, shared-space invites, scoped credentials, note traversal, and revision-aware mutations. Use when an agent must discover, authenticate, read, write, share, redeem, or verify Nabu data, or use the HTTP API because MCP is unavailable or explicitly requested.
-version: 0.2.1
+version: 0.2.2
 ---
 
 # Nabu agent contract
@@ -89,12 +89,15 @@ current:
   separate deployment is required. Prefer the bundled
   `scripts/nabu-connect.mjs` helper when Node.js 20 or newer is available. It
   preflights secure storage before consuming the invite, generates and safely
-  reuses one idempotency key, accepts the exact v2 response fields, writes the
-  seven-key profile with platform-correct paths and permissions, reloads it,
-  and verifies the scoped tree. Resolve the script relative to this `SKILL.md`
-  and pass the invite through process stdin, never as a command-line argument,
-  environment variable, ordinary file, or echoed shell command. Use
-  `--credentials-dir` when the harness has an approved secret directory.
+  reuses one idempotency key, accepts the exact v2 response fields, preserves a
+  successfully redeemed response in a restricted recovery file until profile
+  promotion succeeds, writes the seven-key profile with platform-correct paths
+  and verified permissions, reloads it, and verifies the scoped tree. Resolve
+  the script relative to this `SKILL.md` and pass the invite through process
+  stdin or its hidden interactive prompt, never as a command-line argument,
+  environment variable, shell variable, ordinary file, or echoed command. By
+  default it uses Nabu-owned OS configuration storage; use `--credentials-dir`
+  only when the harness has an approved provider-neutral secret directory.
   After success, reconnect the deployment's `/mcp` endpoint with the persisted
   bearer. If the helper is unavailable, parse the URL with a URL parser,
   preserve any deployment base path, connect anonymously to `/mcp`, confirm
@@ -146,13 +149,18 @@ field, or treat it as a long-lived bearer token.
 
 ## Redeem and persist scoped access
 
-1. Prefer `scripts/nabu-connect.mjs` for first-run collaborator setup. Pass the
-   invite through stdin. The helper preflights the credential directory before
-   redemption and prints only token-free verification metadata. For an MCP
-   response already received in the current process, pass that JSON through
-   stdin with `--response-stdin --api-base ${NABU_URL}`; this retries storage
-   without redeeming again. Never reconstruct a token that is no longer in
-   process memory.
+1. Prefer `scripts/nabu-connect.mjs` for first-run collaborator setup. Start it
+   directly and paste the invite into its hidden prompt, or write the invite
+   directly to process stdin from the agent harness. Do not route it through a
+   shell or environment variable. The helper preflights the credential
+   directory before redemption and prints only token-free verification
+   metadata. Until the final profile is written, it keeps a successful response
+   in a restricted recovery file whose Windows DACL permits only the current
+   user and operating-system administrative principals; on failure, use the
+   reported recovery path to finish storage and do not redeem again. For an MCP
+   response already received in the current process, send that JSON directly
+   over process stdin with `--response-stdin --api-base ${NABU_URL}`. Never
+   reconstruct a token that is no longer in process memory.
 2. Without the helper, call `redeem_shared_space_invite` from the bootstrap
    surface with the exact `inviteUrl`. For v2, provide a fresh high-entropy
    `idempotencyKey`; the HTTP fallback maps this value to the `Idempotency-Key`
