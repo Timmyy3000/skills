@@ -362,6 +362,22 @@ the deployment base path. Use the access token as
 
 ### Persist and verify one scoped profile
 
+Prefer the bundled `scripts/nabu-connect.mjs` helper when Node.js 20 or newer
+is available. Resolve it relative to the installed Nabu skill, pass an invite
+through process stdin, and optionally select an approved secret root with
+`--credentials-dir`. The helper validates and restricts the destination before
+it consumes the invite, then redeems, atomically writes, reloads, and verifies
+the profile without printing the token. If MCP redemption already succeeded in
+the current process but storage failed, pass the original response through
+stdin with `--response-stdin --api-base ${NABU_URL}`; do not redeem again. A
+token that has left process memory cannot be reconstructed from the invite.
+
+On Windows, the helper builds paths with Node's Windows path API and secures
+the deployment directory and profile with `icacls.exe` plus the current user's
+SID. It does not call `[System.IO.File]::SetAccessControl`, which is unavailable
+in some PowerShell/.NET installations. The server-issued ID already starts with
+`space_`; use `${sharedSpaceId}.env`, never `space_${sharedSpaceId}.env`.
+
 Persist the token in an approved credential store shared by the agents,
 sessions, and chats that will use this deployment. Key the profile by the
 canonical `NABU_URL` and server-issued `sharedSpaceId`, not by an invite URL or

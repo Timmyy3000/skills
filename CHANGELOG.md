@@ -2,6 +2,18 @@
 
 This file records user-facing changes to the shared skills repository. Commit links preserve the history that predates this changelog.
 
+## Unreleased
+
+### Fixed
+
+- Added a tested, provider-neutral Nabu collaborator connector that preflights
+  secret storage before one-time invite redemption, persists and reloads the
+  scoped profile, and verifies authenticated access without printing secrets.
+- Fixed Nabu's Windows profile guidance: paths are joined correctly, the
+  server-issued `space_` prefix is not duplicated, and ACLs use `icacls.exe`
+  instead of the unavailable static `System.IO.File.SetAccessControl` call.
+- Bumped the Nabu skill to 0.2.1.
+
 ## 0.6.0 - 2026-09-05
 
 ### Changed
