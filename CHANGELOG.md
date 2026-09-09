@@ -4,6 +4,10 @@ This file records user-facing changes to the shared skills repository. Commit li
 
 ## Unreleased
 
+### Changed
+
+- Tightened Forest closeout to enumerate ignored names, preserve relevant evidence/config at an authorized durable location with hash verification and no secret printing, record command path/version provenance, re-evaluate exact worktree ownership and retention decisions, hand off temporary-retention revisits, and verify Forest state, Git registration, and the exact disk path; partial or unverified closure retains ownership, content, branch, and monitoring as `closure-blocked`.
+- Distinguished verified Git ancestry, patch/aggregate equivalence, and exact merged PR head evidence; a missing or deleted upstream tracking ref alone does not prove a commit was unpublished, and an unknown Forest base blocks closure until safely restored.
 ### Fixed
 
 - Added a tested, provider-neutral Nabu collaborator connector that preflights
@@ -13,6 +17,7 @@ This file records user-facing changes to the shared skills repository. Commit li
   server-issued `space_` prefix is not duplicated, and ACLs use `icacls.exe`
   instead of the unavailable static `System.IO.File.SetAccessControl` call.
 - Bumped the Nabu skill to 0.2.1.
+
 
 ## 0.6.0 - 2026-09-05
 
