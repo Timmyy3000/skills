@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -9,9 +10,11 @@ import { test } from 'node:test';
 import {
   buildProfileContent,
   connect,
+  defaultCredentialsRoot,
   getProfilePath,
   getWindowsAclCommands,
   parseRedemptionResponse,
+  parseWindowsAclDump,
 } from './nabu-connect.mjs';
 
 const deploymentHash = 'sha256-87fa6b9976e314bdd2e306828d4603582905e8cd1c0761eb034b2cec688dd446';
@@ -29,7 +32,7 @@ const response = {
 
 test('uses Windows path separators and the server ID without duplicating space_', () => {
   const result = getProfilePath({
-    credentialsRoot: 'C:\\Users\\ASUS\\.codex\\secrets\\nabu',
+    credentialsRoot: 'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials',
     deploymentHash,
     sharedSpaceId,
     platform: 'win32',
@@ -37,7 +40,7 @@ test('uses Windows path separators and the server ID without duplicating space_'
 
   assert.equal(
     result,
-    'C:\\Users\\ASUS\\.codex\\secrets\\nabu\\sha256-87fa6b9976e314bdd2e306828d4603582905e8cd1c0761eb034b2cec688dd446\\space_fb8d79b5-3b30-49a5-bc71-4d7629adbb6f.env',
+    'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials\\sha256-87fa6b9976e314bdd2e306828d4603582905e8cd1c0761eb034b2cec688dd446\\space_fb8d79b5-3b30-49a5-bc71-4d7629adbb6f.env',
   );
   assert.equal(result.includes('ASUS.codex'), false);
   assert.equal(result.includes('space_space_'), false);
@@ -45,8 +48,8 @@ test('uses Windows path separators and the server ID without duplicating space_'
 
 test('builds icacls commands using a SID and no unavailable SetAccessControl call', () => {
   const commands = getWindowsAclCommands({
-    directoryPath: 'C:\\Users\\ASUS\\.codex\\secrets\\nabu\\hash',
-    filePath: 'C:\\Users\\ASUS\\.codex\\secrets\\nabu\\hash\\profile.env',
+    directoryPath: 'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials\\hash',
+    filePath: 'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials\\hash\\profile.env',
     sid: 'S-1-5-21-1234',
   });
 
@@ -54,7 +57,7 @@ test('builds icacls commands using a SID and no unavailable SetAccessControl cal
     {
       command: 'icacls.exe',
       args: [
-        'C:\\Users\\ASUS\\.codex\\secrets\\nabu\\hash',
+        'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials\\hash',
         '/inheritance:r',
         '/grant:r',
         '*S-1-5-21-1234:(OI)(CI)F',
@@ -63,7 +66,7 @@ test('builds icacls commands using a SID and no unavailable SetAccessControl cal
     {
       command: 'icacls.exe',
       args: [
-        'C:\\Users\\ASUS\\.codex\\secrets\\nabu\\hash\\profile.env',
+        'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials\\hash\\profile.env',
         '/inheritance:r',
         '/grant:r',
         '*S-1-5-21-1234:F',
@@ -71,6 +74,36 @@ test('builds icacls commands using a SID and no unavailable SetAccessControl cal
     },
   ]);
   assert.equal(JSON.stringify(commands).includes('SetAccessControl'), false);
+});
+
+test('parses Windows SDDL and rejects unapproved allow identities', () => {
+  const sid = 'S-1-5-21-1234';
+  assert.deepEqual(parseWindowsAclDump(
+    `profile\r\nD:PAI(A;;FA;;;${sid})(A;;FA;;;SY)(A;;FA;;;BA)`,
+    sid,
+  ), []);
+  assert.deepEqual(parseWindowsAclDump(
+    `profile\r\nD:PAI(A;;FA;;;${sid})(A;;FR;;;S-1-1-0)(D;;FW;;;S-1-5-11)`,
+    sid,
+  ), ['S-1-1-0']);
+  assert.deepEqual(parseWindowsAclDump('unrecognized output', sid), ['MISSING_CURRENT_SID']);
+  assert.deepEqual(parseWindowsAclDump(
+    'profile\r\nD:PAI(A;;FA;;;LA)(A;;FA;;;SY)(A;;FA;;;BA)',
+    'S-1-5-21-1234-500',
+  ), []);
+});
+
+test('uses Nabu-owned defaults and ignores provider-specific homes', () => {
+  assert.equal(defaultCredentialsRoot({
+    platform: 'win32',
+    env: { APPDATA: 'C:\\Users\\ASUS\\AppData\\Roaming', CODEX_HOME: 'C:\\provider' },
+    home: 'C:\\Users\\ASUS',
+  }), 'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials');
+  assert.equal(defaultCredentialsRoot({
+    platform: 'linux',
+    env: { XDG_CONFIG_HOME: '/home/asus/.config', CODEX_HOME: '/provider' },
+    home: '/home/asus',
+  }), '/home/asus/.config/nabu/credentials');
 });
 
 test('accepts the shared redemption fields and emits exactly seven profile keys', () => {
@@ -103,7 +136,7 @@ test('rejects owner-connection response fields instead of silently losing a scop
 
 test('selects win32 path semantics without depending on the host OS', () => {
   assert.equal(path.win32.basename(getProfilePath({
-    credentialsRoot: 'C:\\Users\\ASUS\\.codex\\secrets\\nabu',
+    credentialsRoot: 'C:\\Users\\ASUS\\AppData\\Roaming\\Nabu\\credentials',
     deploymentHash,
     sharedSpaceId,
     platform: 'win32',
@@ -179,11 +212,50 @@ test('finishes storage from an existing MCP response without redeeming again', a
     assert.equal(result.connected, true);
     assert.equal(fake.redemptionCount(), 0);
     assert.equal(result.verificationStatus, 200);
-    await assert.rejects(connect(options, JSON.stringify(response)), /Profile already exists/);
+    await assert.rejects(connect(options, JSON.stringify(response)), /Credential file already exists/);
 
     const replaced = await connect({ ...options, replace: true }, JSON.stringify(response));
     assert.equal(replaced.connected, true);
     assert.equal(fake.redemptionCount(), 0);
+  } finally {
+    await fake.close();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('preserves a redeemed credential when the final profile collides', async () => {
+  const fake = await startFakeNabu();
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nabu-connect-recovery-'));
+  try {
+    await connect({
+      mode: 'response',
+      credentialsDir: root,
+      replace: false,
+      apiBaseUrl: fake.baseUrl,
+    }, JSON.stringify(response));
+
+    let failure;
+    try {
+      await connect({
+        mode: 'invite',
+        credentialsDir: root,
+        replace: false,
+        apiBaseUrl: '',
+      }, `${fake.baseUrl}/invites/new-one-time-secret`);
+    } catch (error) {
+      failure = error;
+    }
+    assert.ok(failure);
+    assert.equal(fake.redemptionCount(), 1);
+    assert.equal(failure.message.includes(response.accessToken), false);
+    const match = failure.message.match(/preserved at (.+?); do not redeem/u);
+    assert.ok(match);
+    const recoveryPath = match[1];
+    assert.equal(fs.existsSync(recoveryPath), true);
+    assert.equal(JSON.parse(fs.readFileSync(recoveryPath, 'utf8')).accessToken, response.accessToken);
+    if (process.platform !== 'win32') {
+      assert.equal(fs.statSync(recoveryPath).mode & 0o777, 0o600);
+    }
   } finally {
     await fake.close();
     fs.rmSync(root, { recursive: true, force: true });
@@ -208,6 +280,53 @@ test('rejects a symlinked deployment directory before consuming an invite', {
     await fake.close();
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test('rejects a symlinked credentials root before consuming an invite', {
+  skip: process.platform === 'win32',
+}, async () => {
+  const fake = await startFakeNabu();
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'nabu-connect-root-link-'));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'nabu-connect-root-outside-'));
+  const root = path.join(parent, 'redirect', 'credentials');
+  try {
+    fs.symlinkSync(outside, path.join(parent, 'redirect'), 'dir');
+    await assert.rejects(
+      connect({ mode: 'invite', credentialsDir: root, replace: false, apiBaseUrl: '' }, `${fake.baseUrl}/invites/secret`),
+      /symlink or reparse point/,
+    );
+    assert.equal(fake.redemptionCount(), 0);
+  } finally {
+    await fake.close();
+    fs.rmSync(parent, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test('rejects a Windows directory with an unrelated explicit allow ACE before redemption', {
+  skip: process.platform !== 'win32',
+}, async () => {
+  const fake = await startFakeNabu();
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nabu-connect-acl-'));
+  try {
+    const directoryPath = path.join(root, deploymentHashForTest(fake.baseUrl));
+    fs.mkdirSync(directoryPath);
+    const seeded = spawnSync('icacls.exe', [
+      directoryPath,
+      '/grant',
+      '*S-1-1-0:(OI)(CI)R',
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(seeded.status, 0, seeded.stderr || seeded.stdout);
+
+    await assert.rejects(
+      connect({ mode: 'invite', credentialsDir: root, replace: false, apiBaseUrl: '' }, `${fake.baseUrl}/invites/secret`),
+      /ACL contains unapproved allow identities/,
+    );
+    assert.equal(fake.redemptionCount(), 0);
+  } finally {
+    await fake.close();
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
