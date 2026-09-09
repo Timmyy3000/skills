@@ -1,7 +1,7 @@
 ---
 name: nabu
 description: Work with self-hosted Nabu knowledge spaces through native remote MCP first, including owner-agent connection links, bearer authentication, shared-space invites, scoped credentials, note traversal, and revision-aware mutations. Use when an agent must discover, authenticate, read, write, share, redeem, or verify Nabu data, or use the HTTP API because MCP is unavailable or explicitly requested.
-version: 0.2.0
+version: 0.2.1
 ---
 
 # Nabu agent contract
@@ -86,11 +86,20 @@ current:
   connection URL. Verify the connection with `get_vault_summary` before
   managing notes or shared spaces.
 - **Collaborator:** Accept one invite URL; no Nabu account, password, or
-  separate deployment is required. Parse the URL with a URL parser, preserve
-  any deployment base path, and connect anonymously to that deployment's
-  `/mcp`. Confirm that the bootstrap surface exposes only
-  `redeem_shared_space_invite`, redeem the exact URL with an agent-generated
-  idempotency key, save the returned scoped credential profile, reconnect with
+  separate deployment is required. Prefer the bundled
+  `scripts/nabu-connect.mjs` helper when Node.js 20 or newer is available. It
+  preflights secure storage before consuming the invite, generates and safely
+  reuses one idempotency key, accepts the exact v2 response fields, writes the
+  seven-key profile with platform-correct paths and permissions, reloads it,
+  and verifies the scoped tree. Resolve the script relative to this `SKILL.md`
+  and pass the invite through process stdin, never as a command-line argument,
+  environment variable, ordinary file, or echoed shell command. Use
+  `--credentials-dir` when the harness has an approved secret directory.
+  After success, reconnect the deployment's `/mcp` endpoint with the persisted
+  bearer. If the helper is unavailable, parse the URL with a URL parser,
+  preserve any deployment base path, connect anonymously to `/mcp`, confirm
+  that bootstrap exposes only `redeem_shared_space_invite`, redeem with an
+  agent-generated idempotency key, save the returned profile, reconnect with
   its bearer, and verify the scoped tree. Reuse that profile on later sessions
   and chats instead of asking for another invite. Never fetch the invite URL
   directly, echo it back, or save it.
@@ -137,23 +146,34 @@ field, or treat it as a long-lived bearer token.
 
 ## Redeem and persist scoped access
 
-1. Call `redeem_shared_space_invite` from the bootstrap surface with the exact
-   `inviteUrl`. For v2, provide a fresh high-entropy `idempotencyKey`; the
-   HTTP fallback maps this value to the `Idempotency-Key` header.
-2. If redemption has an unknown network outcome, make at most one recovery
+1. Prefer `scripts/nabu-connect.mjs` for first-run collaborator setup. Pass the
+   invite through stdin. The helper preflights the credential directory before
+   redemption and prints only token-free verification metadata. For an MCP
+   response already received in the current process, pass that JSON through
+   stdin with `--response-stdin --api-base ${NABU_URL}`; this retries storage
+   without redeeming again. Never reconstruct a token that is no longer in
+   process memory.
+2. Without the helper, call `redeem_shared_space_invite` from the bootstrap
+   surface with the exact `inviteUrl`. For v2, provide a fresh high-entropy
+   `idempotencyKey`; the HTTP fallback maps this value to the `Idempotency-Key`
+   header.
+3. If redemption has an unknown network outcome, make at most one recovery
    request with the same invite URL and the same idempotency key. v2 returns
    the identical token and metadata. Never retry with a different key or claim
    success without a successful response.
-3. Save the returned scoped token and non-secret metadata in an approved
+4. Save the returned scoped token and non-secret metadata in an approved
    credential store keyed by the exact canonical `NABU_URL` and
    `sharedSpaceId`. Make that profile available across agents, sessions, and
    chats. Never put passwords, cookies, invite URLs, bearer tokens, or
    idempotency keys in chat, Markdown, source files, ordinary workspace files,
-   logs, or commits.
-4. Reuse the persisted profile for later turns. Verify it immediately against
+   logs, environment variables, or commits.
+5. Reuse the persisted profile for later turns. Verify it immediately against
    the scoped tree or another in-scope read before reporting access as ready.
    If the token is missing or verification fails, inspect the credential store
-   and report the failure before requesting a new invite.
+   and report the failure before requesting a new invite. On Windows, do not
+   invent `[System.IO.File]::SetAccessControl` calls or concatenate `$HOME`
+   with `.codex`; use the bundled helper's `icacls.exe` and platform-aware path
+   joining.
 
 ## Read and write notes safely
 
