@@ -1,0 +1,36 @@
+name: Nabu connector
+
+on:
+  pull_request:
+    paths:
+      - "skills/nabu/**"
+      - "scripts/validate-skills.ps1"
+      - ".github/workflows/nabu-connector.yml"
+  push:
+    paths:
+      - "skills/nabu/**"
+      - "scripts/validate-skills.ps1"
+      - ".github/workflows/nabu-connector.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check connector syntax
+        run: node --check skills/nabu/scripts/nabu-connect.mjs
+      - name: Test connector
+        run: node --test skills/nabu/scripts/nabu-connect.test.mjs
+      - name: Validate skills
+        shell: pwsh
+        run: ./scripts/validate-skills.ps1
