@@ -363,19 +363,29 @@ the deployment base path. Use the access token as
 ### Persist and verify one scoped profile
 
 Prefer the bundled `scripts/nabu-connect.mjs` helper when Node.js 20 or newer
-is available. Resolve it relative to the installed Nabu skill, pass an invite
-through process stdin, and optionally select an approved secret root with
-`--credentials-dir`. The helper validates and restricts the destination before
-it consumes the invite, then redeems, atomically writes, reloads, and verifies
-the profile without printing the token. If MCP redemption already succeeded in
-the current process but storage failed, pass the original response through
-stdin with `--response-stdin --api-base ${NABU_URL}`; do not redeem again. A
-token that has left process memory cannot be reconstructed from the invite.
+is available. Resolve it relative to the installed Nabu skill. Start it directly
+and paste the invite into its hidden prompt, or send the invite directly over
+process stdin from the agent harness; do not interpolate it through a shell,
+shell variable, or environment variable. Optionally select an approved
+provider-neutral secret root with `--credentials-dir`. Otherwise the helper
+uses Nabu-owned configuration storage: `%APPDATA%\\Nabu\\credentials` on
+Windows and `${XDG_CONFIG_HOME:-~/.config}/nabu/credentials` on POSIX systems.
+The helper validates and restricts the destination before it consumes the
+invite, then redeems, creates a restricted recovery record, atomically promotes
+the seven-key profile, reloads it, verifies it, and removes the recovery record
+without printing the token. If promotion fails after redemption, the token-free
+error names the restricted recovery path; retain it and do not redeem again. If
+MCP redemption already succeeded in the current process, send the original
+response directly over process stdin with `--response-stdin --api-base
+${NABU_URL}`. A token that has left process memory cannot be reconstructed from
+the invite.
 
-On Windows, the helper builds paths with Node's Windows path API and secures
-the deployment directory and profile with `icacls.exe` plus the current user's
-SID. It does not call `[System.IO.File]::SetAccessControl`, which is unavailable
-in some PowerShell/.NET installations. The server-issued ID already starts with
+On Windows, the helper builds paths with Node's Windows path API, removes
+inherited access, grants the current SID, and audits the resulting DACL to
+reject allow entries except the current user, Windows SYSTEM, and the local
+Administrators group. It uses `icacls.exe` for mutation
+and does not call `[System.IO.File]::SetAccessControl`, which is unavailable in
+some PowerShell/.NET installations. The server-issued ID already starts with
 `space_`; use `${sharedSpaceId}.env`, never `space_${sharedSpaceId}.env`.
 
 Persist the token in an approved credential store shared by the agents,
@@ -394,12 +404,13 @@ an ambiguous folder name. Store the following metadata with the secret:
 Restrict access according to the platform secret store, write atomically when
 the store supports files, reject symlinks or unsafe permissions, and never
 shell-source an untrusted profile. If a file-backed profile is used, write the
-exact seven-key allowlist atomically and keep it readable only by the current
-user; do not silently cross between runtime credential directories. Do not put
-the token in Markdown, source, chat, logs, or URLs. Verify the selected token
-against `GET ${NABU_URL}/api/vault/tree` or another in-scope read before using
-it. Treat a missing, expired, revoked, or failed profile as unusable; do not
-request a broader scope automatically.
+exact seven-key allowlist atomically. On POSIX keep it readable only by the
+current user; on Windows permit only the current user and approved OS
+administrative principals. Do not silently cross between runtime credential
+directories. Do not put the token in Markdown, source, chat, logs, or URLs.
+Verify the selected token against `GET ${NABU_URL}/api/vault/tree` or another
+in-scope read before using it. Treat a missing, expired, revoked, or failed
+profile as unusable; do not request a broader scope automatically.
 
 ## Error handling
 
