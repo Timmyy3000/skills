@@ -1,7 +1,7 @@
 ---
 name: plan-it
 description: Create or revise proportionate implementation plans, using inline planning for tiny work and a configured planning worker for fast/full work. Use standalone or when Kickoff delegates planning; produce concise Markdown or a full human-review artifact as warranted.
-version: 0.6.0
+version: 1.0.0
 ---
 
 # Plan It
@@ -37,9 +37,9 @@ Return `Needs context` and list only missing inputs when planning cannot proceed
 
 Tiny planning runs in the current session unless the user or repository explicitly requires a planning worker. Keep its plan inline in the brief or episode state so worker setup costs do not exceed the work.
 
-For fast/full planning, or explicitly delegated tiny planning, read [references/delegation.md](references/delegation.md) for selector discovery, first-use configuration, dispatch, artifact validation, and revision handoffs.
+For fast/full planning, or explicitly delegated tiny planning, read [references/delegation.md](references/delegation.md) for worker resolution, dispatch, artifact validation, and revision handoffs.
 
-When dispatching, use `plan_it.workers.<harness>` from the repository's single `kickoff.yaml`. Revalidate it before dispatch. Configure it only when planning actually needs a worker. Never substitute the orchestrator or a different worker silently.
+When dispatching, resolve the `planning` role per the kickoff skill's `references/config.md`. A missing role runs as a fresh child on the parent's model. Record the resolved entry, and any fallback, in the episode state.
 
 Dispatch a fresh worker with artifact paths and focused evidence pointers. Do not pass the full conversation. The worker may inspect cited and adjacent repository evidence, but must avoid unrelated repository sweeps and make no implementation changes.
 
