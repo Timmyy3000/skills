@@ -2,73 +2,11 @@
 
 Use this reference only when `ship-it` resolves implementation delegation to `always` or when `auto` selects workers.
 
-## Single Kickoff Configuration
+## Worker Resolution
 
-Use one repo-level `kickoff.yaml` for this workflow:
+Resolve the worker from the `code role for the playbook (`feature, refactoring`, `bug-fix`, `perf-issue`, `hillclimb`, or `hardest tasks`)` role per the kickoff skill's `references/config.md`. A missing role runs as a fresh child on the parent's model; never stop to ask the user to configure a worker. Map the spawn primitive through the kickoff skill's `references/harness.md`.
 
-- `implementation_delegation_default` optionally stores the user's lasting preference: `never`, `auto`, or `always`.
-- `plan_it.workers` stores one harness-native planning selector per harness and is owned by `plan-it`.
-- `plan_review.workers` optionally stores one harness-native review selector per harness. It is owned by `adversarial-review` and `simplicity-review` and is shared by both.
-- `ship_it.workers` stores one harness-native worker selector per harness only after delegated implementation needs one.
-
-Use the agent-workspace root already selected by repository instructions and kickoff, such as `.agents/` or `.agent/`. Do not create either convention blindly.
-
-Example worker configuration:
-
-```yaml
-version: 1
-implementation_delegation_default: "auto"
-plan_it:
-  workers:
-    codex:
-      agent: "<planning-worker-name>"
-plan_review:
-  workers:
-    codex:
-      agent: "<review-worker-name>"
-ship_it:
-  workers:
-    codex:
-      agent: "<same-or-different-native-agent-name>"
-    claude-code:
-      agent: "<native-agent-name>"
-    opencode:
-      model: "<provider/model-id>"
-      reasoning_effort: "<optional-harness-native-level>"
-```
-
-The lasting default is optional, and each worker section is absent until its owning stage configures it. Never create the file or an empty section merely because fallback mode is `auto`. The current session is the orchestrator and must not be persisted.
-
-Each harness entry must use exactly one selector:
-
-- `agent`: exact harness-native named agent. Its native definition is the sole source of truth for model, reasoning, instructions, and other settings.
-- `model`: direct per-spawn model selection, with optional `reasoning_effort`, only when the harness has no named-agent requirement.
-
-Never combine `agent` and `model`, duplicate a named agent's model settings in `kickoff.yaml`, or overwrite another harness's entry.
-
-### Sharing Workers Across Stages
-
-`plan-it` resolves `plan_it.workers`, the review skills resolve `plan_review.workers`, and `ship-it` resolves `ship_it.workers`. To reuse one worker, store the exact same selector in the intended active-harness entries. To use different workers, store different selectors. A named worker's native definition remains the only source of truth for its model, reasoning, instructions, and other settings. Preserve every stage section when updating any one of them.
-
-## First-Use Worker Bootstrap
-
-When the current harness has no worker entry and delegation will be used:
-
-1. Identify the active harness and its available subagent mechanism.
-2. Discover named agents available to the current harness before asking for model settings.
-3. If a suitable named agent exists, ask the user to select or confirm its exact name, validate it, and store only `agent`.
-4. If named agents are supported but none is suitable, ask for agent name, model, supported reasoning level, and personal or project scope. Explain and create the smallest valid native definition, validate it, then store only `agent`.
-5. If the harness dispatches directly by model, ask for model and supported reasoning level, validate them, then store `model` and optional `reasoning_effort`.
-6. Update only the active harness entry in `kickoff.yaml`, preserving all other keys and harnesses.
-
-Do not ask for a named agent's model or reasoning settings when selecting an existing agent. Do not ask the user to choose an orchestrator model or configure inactive harnesses.
-
-Revalidate the saved selector before each delegated run. If a named agent is unavailable or invalid, do not add model overrides or substitute another worker silently. Ask whether to repair it or choose a replacement and update only the active harness entry.
-
-If the harness cannot spawn workers:
-
-- In `auto`, record that delegation was unavailable and continue with the orchestrator.
-- In `always`, stop and ask the user to switch the task to `never` or `auto`, configure a supported worker mechanism, or use a supporting harness.
+`implementation_delegation_default` in `kickoff.yaml` stores a lasting `never`, `auto`, or `always`. If the harness cannot spawn workers, `auto` continues in the orchestrator and records it, and `always` records the gate as degraded and continues in the orchestrator.
 
 ## Auto-Mode Decision
 
@@ -147,11 +85,11 @@ Create the smallest useful number of tasks, but prefer separate packets for genu
 
 For each dependency-ready task:
 
-- Spawn `agent` by its exact native name without model or reasoning overrides; otherwise spawn with the configured `model` and optional `reasoning_effort`.
+- Spawn the resolved role entry. A named agent runs without model or reasoning overrides.
 - Prefer a fresh worker context where supported.
 - Pass the task ID, manifest path, brief path, plan path, relevant review findings, applicable repository instructions, and exact task-workspace or worktree path.
 - Tell the worker to read those artifacts before editing.
-- Require the worker to invoke Ponytail Full and confirm activation before editing.
+- Open the brief with the kickoff skill's `references/delegate-brief.md`, and require the worker to invoke Ponytail Full and confirm activation before editing.
 - Give exclusive file or system ownership.
 - Prohibit scope expansion, unrelated edits, additional worker spawning, and silent architecture changes.
 - Require the structured result listed in the manifest.
@@ -179,7 +117,7 @@ Preserve:
 
 - Accepted plans and repository-required planning archives.
 - Work briefs and decisions the repository treats as durable.
-- `kickoff.yaml` and required harness-native worker profiles.
+- `kickoff.yaml` and any harness-native worker profiles it names.
 
 Remove temporary `execution-manifest.md` and `worker-results/` only when all are true:
 

@@ -11,17 +11,29 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 
 | Skill | Purpose |
 | --- | --- |
-| `kickoff` | Orchestrate proportionate planning, review, implementation, monitored delivery, and verified closeout. |
+| `kickoff` | Drive engineering work autonomously: route and playbook selection, principles, cross-model delegation, review, watched PRs, landing when granted, and verified closeout. |
+| `kickoff-setup` | Optionally map models to kickoff roles per harness in `kickoff.yaml`. |
+| `kickoff-help` | Route questions about kickoff, its skills, playbooks, and principles. |
 | `task-master` | Turn roadmaps into executable, verifiable delivery tickets and coordinate their progress. |
 | `adversarial-review` | Independently critique plans, briefs, and investigation outputs before execution. |
 | `simplicity-review` | Force plans through delete, reuse, and compress passes while preserving required outcomes and safeguards. |
-| `plan-it` | Create proportionate, evidence-backed plans inline for tiny work or through a configured worker for fast/full work. |
+| `plan-it` | Create proportionate, evidence-backed plans inline for tiny work or through a planning worker for fast/full work. |
 | `ship-it` | Execute accepted plans through validation, proportionate simplicity/correctness review, authorized delivery, and closeout. |
 | `code-review` | Review correctness, with a combined simplicity check for tiny policy-permitted diffs. |
-| `create-pr` | Verify the intended target, create or update the PR, and establish active review monitoring. |
+| `create-pr` | Verify the intended target, create or update the PR, and arm its review watch. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 | `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |
 | `design-to-code` | Implement and refine interfaces from Aphrodite evidence through project audit, clarification, and render/compare iteration. |
+
+## Engineering layer
+
+Kickoff 1.0 merges the delivery workflow with [pstack](https://github.com/cursor/plugins/tree/main/pstack)'s engineering discipline, through its T3 Code port [p3-stack](https://github.com/uzairansaruzi/p3-stack). See [NOTICE.md](NOTICE.md).
+
+- **Playbooks** live in `skills/kickoff/playbooks/`: investigation, bug fix, perf, hillclimb, forensics, feature, refactoring, prototype, visual parity, skill authoring, eval, babysit, shipping, autonomous run, orchestrate, autopilot, session pickup, pause safely, multi-phase plan, worktree cleanup, and opening a PR.
+- **Principles** are the `principle-*` skills. Kickoff reads the ones a decision applies and cites them in its reply.
+- **Situational skills**: `architect`, `arena`, `automate-me`, `benchmark-checklist`, `blast-radius`, `bro`, `correct`, `create-verification-skill`, `figure-it-out`, `how`, `interrogate`, `maintain-verification-skill`, `make-bot-ui`, `no-comments`, `recall`, `reflect`, `show-me-your-work`, `swarm`, `tdd`, `teach`, `technical-writing`, `typescript-best-practices`, `unslop`, and `why`.
+
+Kickoff names T3 Code's tools and maps them to Claude Code, Codex, or an inline fallback through `skills/kickoff/references/harness.md`. No setup is required: a role without a `kickoff.yaml` entry runs as a fresh child on the parent's model.
 
 ## Install
 

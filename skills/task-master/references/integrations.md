@@ -42,8 +42,9 @@ Kickoff completion does not automatically make the ticket `done`.
 
 ## Worktree isolation
 
-Use one worktree per concurrent implementation ticket. Prefer Forest when it is
-available and selected by the delivery workflow; otherwise use Git worktrees or
+Use one worktree per concurrent implementation ticket. In T3 Code, launch each
+ticket's worker with `t3_thread_launch` and a `workspaceStrategy`. Otherwise
+prefer Forest when the delivery workflow selects it, then Git worktrees, or
 execute conflicting work serially.
 
 Begin branch names with the ticket ID, for example:
