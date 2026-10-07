@@ -1,7 +1,7 @@
 ---
 name: simplicity-review
 description: Independently force an engineering plan toward the least machinery that achieves the requested outcome while preserving constraints and safety controls. Use for full plans, or when a fast/tiny plan introduces material complexity; return reconciled plan feedback, not code changes.
-version: 0.6.0
+version: 1.0.0
 ---
 
 # Simplicity Review
@@ -18,11 +18,11 @@ Skipping this review must be recorded in the episode state with the route-based 
 
 ## Inputs And Independence
 
-Use a fresh `plan_review.workers.<harness>` session. Pass the brief, revised plan, episode state, complete adversarial findings and dispositions, repository policies, and focused evidence pointers. Do not pass the orchestrator's preferred simplification.
+Use a fresh reviewer on the first entry of the `plan review` role. Pass the brief, revised plan, episode state, complete adversarial findings and dispositions, repository policies, and focused evidence pointers. Do not pass the orchestrator's preferred simplification.
 
-Use the repository's existing agent-workspace convention and single `kickoff.yaml`. A selector under `plan_review.workers.<harness>` contains exactly one of: an exact harness-native `agent`, or a direct `model` with optional `reasoning_effort` when named workers are unsupported. Honor an explicit current choice, validate a saved selector before use, and never substitute a worker silently. If missing, discover available native workers before asking the user to select or configure one, then update only the active harness entry while preserving every other key.
+Resolve the reviewer from the `plan review` role per the kickoff skill's `references/config.md`, and map the spawn through its `references/harness.md`. A missing role runs as a fresh child on the parent's model. Never stop to ask the user to configure a reviewer.
 
-The review is read-only. Do not rewrite the plan, implement code, or spawn additional workers. Under Kickoff, an unavailable independent worker sets the review phase to `needs-input` or `blocked` until the user chooses a valid worker or explicitly accepts a non-independent fallback. In standalone use, current-session review is allowed only after the same explicit acceptance and must be labeled non-independent.
+The review is read-only. Do not rewrite the plan, implement code, or spawn additional workers. When the harness cannot spawn a child, review inline, label the result non-independent, and record the degraded gate in the episode state.
 
 ## Priority
 

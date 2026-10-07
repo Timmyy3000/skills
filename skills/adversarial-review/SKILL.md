@@ -1,7 +1,7 @@
 ---
 name: adversarial-review
 description: Independently challenge an engineering brief, plan, investigation, or delivery proposal for correctness, missing requirements, unsafe assumptions, and inadequate validation. Use before execution when risk or workflow policy warrants a fresh review; produce findings for plan revision, never implementation changes.
-version: 0.6.0
+version: 1.0.0
 ---
 
 # Adversarial Review
@@ -10,11 +10,11 @@ Decide whether the proposed work can responsibly proceed. Find material gaps; do
 
 ## Independence And Context
 
-Use a fresh configured `plan_review.workers.<harness>` session when available. Pass only the brief, plan, episode state, relevant evidence pointers, repository instructions, and the review question. Do not pass the orchestrator's suspected findings or the full conversation.
+Use a fresh reviewer for every round. For `full` work, run a panel: one reviewer per entry in the `plan review` role, on different providers when the catalog has them, each seeded identically. Merge their findings, dedupe by root cause, and note where reviewers agreed, since cross-model agreement is high-signal. `fast` work uses the first entry. Pass only the brief, plan, episode state, relevant evidence pointers, repository instructions, and the review question. Do not pass the orchestrator's suspected findings or the full conversation.
 
-Use the repository's existing agent-workspace convention and single `kickoff.yaml`. A selector under `plan_review.workers.<harness>` contains exactly one of: an exact harness-native `agent`, or a direct `model` with optional `reasoning_effort` when named workers are unsupported. Honor an explicit current choice, validate a saved selector before use, and never substitute a worker silently. If missing, discover available native workers before asking the user to select or configure one, then update only the active harness entry while preserving every other key.
+Resolve the reviewer from the `plan review` role per the kickoff skill's `references/config.md`, and map the spawn through its `references/harness.md`. A missing role runs as a fresh child on the parent's model. Never stop to ask the user to configure a reviewer.
 
-The review is read-only. The worker must not edit files, implement fixes, or spawn more workers. Under Kickoff, an unavailable independent worker sets the review phase to `needs-input` or `blocked` until the user chooses a valid worker or explicitly accepts a non-independent fallback. In standalone use, current-session review is allowed only after the same explicit acceptance and must be labeled non-independent.
+The review is read-only. The worker must not edit files, implement fixes, or spawn more workers. When the harness cannot spawn a child, review inline, label the result non-independent, and record the degraded gate in the episode state.
 
 ## When Required
 
