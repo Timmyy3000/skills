@@ -24,6 +24,25 @@ This file records user-facing changes to the shared skills repository. Commit li
 - Bumped the Nabu skill to 0.2.2.
 
 
+## 1.0.0 - 2026-10-07
+
+### Added
+
+- Imported pstack's engineering layer through its T3 Code port, p3-stack: 24 principle skills, 24 situational skills, and 23 playbooks under `kickoff/playbooks`. See `NOTICE.md`.
+- Added `kickoff-setup` and `kickoff-help`, adapted from p3-stack's setup and help skills.
+- Added `kickoff/references/harness.md`, which maps T3 Code tools to Claude Code, Codex, and inline fallbacks, and `kickoff/references/config.md` for `kickoff.yaml` version 2.
+
+### Changed
+
+- Kickoff now records three intake decisions: a route (gates), a playbook (steps), and a grant (`supervised`, `autonomous`, or `land`). Autonomous is the default.
+- A full plan proceeds once its reviews are reconciled unless the user asked to review it or it carries an owner decision no experiment can settle.
+- `kickoff.yaml` version 2 stores per-harness roles. A missing role runs as a fresh child on the parent's model, so no skill stops to ask the user to configure a worker. Version 1 files still resolve and `kickoff-setup` migrates them.
+- Full plans get a cross-model adversarial panel. Under `auto`, fast and full code-writing goes to a delegate so the orchestrator stays the reviewer.
+- `create-pr` arms `watch_pull_request` in T3 Code and a five-minute scheduler job elsewhere, and each wake runs the Babysit playbook. Merging requires a recorded `land` grant and runs the Shipping playbook.
+- Worktree closeout covers T3, Forest, and Git backends.
+- A missing `ponytail-review` falls back to a separate simplicity pass instead of blocking.
+- Released the workflow skills and the repository at 1.0.0.
+
 ## 0.6.0 - 2026-09-05
 
 ### Changed

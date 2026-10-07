@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Review the current branch or pull-request diff for actionable correctness, security, reliability, regression, and test issues before PR creation or after material fixes. Use a fresh reviewer when change risk or size justifies independence; report evidence-backed findings only.
-version: 0.6.0
+version: 1.0.0
 ---
 
 # Code Review
