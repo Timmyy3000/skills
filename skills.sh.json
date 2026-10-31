@@ -22,6 +22,7 @@
         "ship-it",
         "code-review",
         "create-pr",
+        "cleanup",
         "kickoff-setup",
         "kickoff-help"
       ]

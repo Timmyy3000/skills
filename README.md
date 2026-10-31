@@ -21,6 +21,7 @@ Semantic Versioning; user-facing changes belong in [`CHANGELOG.md`](CHANGELOG.md
 | `ship-it` | Execute accepted plans through validation, proportionate simplicity/correctness review, authorized delivery, and closeout. |
 | `code-review` | Review correctness, with a combined simplicity check for tiny policy-permitted diffs. |
 | `create-pr` | Verify the intended target, create or update the PR, and arm its review watch. |
+| `cleanup` | Remove what a session left behind (worktrees, branches, processes, temp files) and report shared caches and resource hogs. |
 | `better-docs` | Make product-document drafts clearer and easier to review without changing their meaning. |
 | `grill-to-spec` | Interview ambiguous product ideas into durable, implementation-agnostic specifications. |
 | `design-to-code` | Implement and refine interfaces from Aphrodite evidence through project audit, clarification, and render/compare iteration. |
@@ -47,7 +48,7 @@ npx skills add DietrichGebert/ponytail --skill ponytail --skill ponytail-review
 Install the full kickoff workflow:
 
 ```powershell
-npx skills add Timmyy3000/skills --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr
+npx skills add Timmyy3000/skills --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --skill cleanup
 ```
 
 The Ponytail command in the primary install block supplies two dependencies for
@@ -64,6 +65,7 @@ npx skills add Timmyy3000/skills --skill simplicity-review
 npx skills add Timmyy3000/skills --skill plan-it --skill code-review
 npx skills add Timmyy3000/skills --skill better-docs
 npx skills add Timmyy3000/skills --skill grill-to-spec
+npx skills add Timmyy3000/skills --skill cleanup
 npx skills add Timmyy3000/skills --skill design-to-code
 ```
 
@@ -89,14 +91,14 @@ For a private clone or local testing:
 
 ```powershell
 npx skills add .
-npx skills add . --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --agent <agent-name>
+npx skills add . --skill grill-to-spec --skill kickoff --skill task-master --skill adversarial-review --skill simplicity-review --skill plan-it --skill ship-it --skill code-review --skill create-pr --skill cleanup --agent <agent-name>
 npx skills add . --skill plan-it --agent <agent-name>
 ```
 
 The helper script wraps the same CLI:
 
 ```powershell
-.\scripts\install-local.ps1 -Skills grill-to-spec,kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr -Agents <agent-name>,claude-code -Global
+.\scripts\install-local.ps1 -Skills grill-to-spec,kickoff,task-master,adversarial-review,simplicity-review,plan-it,ship-it,code-review,create-pr,cleanup -Agents <agent-name>,claude-code -Global
 ```
 
 To inspect the versions of skills installed for Codex on Windows:
