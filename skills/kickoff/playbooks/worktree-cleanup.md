@@ -9,6 +9,8 @@
 5. Prune the confirmed set. Per path, `git worktree remove --force <path>`. If the dir survives on ignored build artifacts, `rm -rf` it, then `git worktree prune`. Branch refs survive, so no commits are lost. Confirm with `df -h /` and re-list with `t3_worktree_list`.
 6. Simulators and other reclaimers. Simulators are usually the next-biggest win. Enumerate with `device_list`, then `xcrun simctl --set testing delete all` (XCTestDevices clones), `xcrun simctl delete unavailable`, and `xcrun simctl runtime list` then `runtime delete <id>` for old runtimes. More when needed: Xcode `DerivedData` and `iOS DeviceSupport`, package caches (pnpm, uv, brew, yarn). Clear only caches the user has not said to keep.
 
+This playbook audits the whole machine on request. The end-of-task cleanup of one session's own footprint is the `cleanup` skill.
+
 This is the one playbook that deletes user state with no code review to catch a slip, so the gates above are the review.
 
 **Reply:** `df -h /` before and after with space reclaimed, the worktrees pruned, and a one-line reason for each held back (in-use by which thread, or holding uncommitted or unpushed work).

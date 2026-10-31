@@ -4,6 +4,16 @@ This file records user-facing changes to the shared skills repository. Commit li
 
 ## Unreleased
 
+## 1.1.0 - 2026-10-31
+
+### Added
+
+- `cleanup` skill: at the end of a task, removes what the session itself created (worktrees, merged or closed branches, processes it started, temp files, build and test output, PR watches), verifies each removal, and reports disk reclaimed. Shared package caches and resource hogs it does not own are reported, never cleared.
+
+### Changed
+
+- `kickoff` runs `cleanup` as the last closeout step of every episode, and its `worktree-cleanup` playbook points to `cleanup` for session-scoped cleanup.
+
 ### Changed
 
 - Tightened Forest closeout to enumerate ignored names, preserve relevant evidence/config at an authorized durable location with hash verification and no secret printing, record command path/version provenance, re-evaluate exact worktree ownership and retention decisions, hand off temporary-retention revisits, and verify Forest state, Git registration, and the exact disk path; partial or unverified closure retains ownership, content, branch, and monitoring as `closure-blocked`.

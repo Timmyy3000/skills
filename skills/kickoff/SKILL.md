@@ -1,7 +1,7 @@
 ---
 name: kickoff
 description: Drive engineering work autonomously from intent to a verified terminal state. Picks a route (how much process) and a playbook (what kind of work), applies engineering principles, delegates across models, reviews independently, opens and watches PRs, lands them when granted, and closes out. Use for /kickoff or $kickoff, rigorous engineering work, or any change requested as shipped end to end.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Kickoff
@@ -50,7 +50,7 @@ Record user corrections as durable decisions. Never make the user repeat a settl
 5. **Approve.** Under `supervised`, wait for the user. Under `autonomous` or `land`, a plan proceeds once its reviews are reconciled, unless it carries an open owner decision that no experiment can settle. Report that decision with its default and keep working on what it does not block.
 6. **Execute with `ship-it`.** The playbook's build steps run inside it. `ship-it` owns delegation, validation, the implementation review mode, and `create-pr`.
 7. **Deliver.** A single-PR episode arms `watch_pull_request` through `create-pr` and runs Babysit in `drive` mode to merge-ready. A stack arms its watch once the stack exists (Opening a PR). Under `land`, continue with the Shipping playbook. Without it, stop at `ready-to-merge`.
-8. **Close out** per the Closeout contract, then run `reflect` when the episode surfaced a lesson that belongs in a skill.
+8. **Close out** per the Closeout contract, then run `reflect` when the episode surfaced a lesson that belongs in a skill. Run `cleanup` last, after the final merge or terminal state.
 
 For `investigation`, stop after step 2. Report findings with sources, uncertainties, and the next decision. Record `investigation-complete`.
 
@@ -69,11 +69,11 @@ An open PR with pending checks is not terminal. A todo item or a one-time status
 
 ## Closeout contract
 
-Before the final reply, verify and record the terminal state and final local and remote SHA, checks and reviews with unresolved findings, deployment or promotion when in scope, branch and worktree disposition, durable artifact paths, temporary-file removal, knowledge-record reconciliation when the repository requires it, and the watch stopped or intentionally kept with its reason. `ship-it` owns the detailed worktree closeout. Do not claim a deploy, merge, or cleanup that has not happened.
+Before the final reply, verify and record the terminal state and final local and remote SHA, checks and reviews with unresolved findings, deployment or promotion when in scope, branch and worktree disposition, durable artifact paths, temporary-file removal, knowledge-record reconciliation when the repository requires it, and the watch stopped or intentionally kept with its reason. `ship-it` owns the detailed worktree closeout. Finish every episode, including investigations and canceled work, with `cleanup`: it removes the session's remaining worktrees, branches, processes, and temp files, and reports shared caches and resource hogs it does not own. Its report goes in the final reply. Do not claim a deploy, merge, or cleanup that has not happened.
 
 ## Version and dependency preflight
 
-Check the installed bundle version once per episode. If a newer compatible bundle exists, offer the update once and require a fresh task after an accepted update. Do not prompt again after a decline. Resolve skills only for stages the route and delivery path will run: `plan-it` for planning, the plan reviewers when their gates apply, `ship-it` and `code-review` for implementation plus `ponytail-review` for the separate review mode, and `create-pr` for PR delivery. A missing stage skill degrades per its own fallback, never silently.
+Check the installed bundle version once per episode. If a newer compatible bundle exists, offer the update once and require a fresh task after an accepted update. Do not prompt again after a decline. Resolve skills only for stages the route and delivery path will run: `plan-it` for planning, the plan reviewers when their gates apply, `ship-it` and `code-review` for implementation plus `ponytail-review` for the separate review mode, and `create-pr` for PR delivery, and `cleanup` for every episode. A missing stage skill degrades per its own fallback, never silently.
 
 ## Non-negotiables
 
